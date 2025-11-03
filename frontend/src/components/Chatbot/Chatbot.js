@@ -1,34 +1,67 @@
-// src/components/Chatbot/Chatbot.js
 import React, { useState } from "react";
 import { askChatbot } from "../../utils/api";
+import "./Chatbot.css";
 
 export default function Chatbot() {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const send = async () => {
-    if (!input) return;
+    if (!input.trim()) return;
+    setLoading(true);
     const res = await askChatbot(input);
-    const answer = res.answer || "No answer";
+    const answer = res.answer || "No response from AI.";
     setHistory(prev => [...prev, { q: input, a: answer }]);
     setInput("");
+    setLoading(false);
   };
 
   return (
-    <div className="container mt-4">
-      <h3>AI Chatbot</h3>
-      <div className="chat-window mb-3">
-        {history.map((h, i) => (
-          <div key={i} className="mb-2">
-            <div><strong>You:</strong> {h.q}</div>
-            <div className="text-muted"><strong>Bot:</strong> {h.a}</div>
-            <hr />
+    <div className="chatbot-container container py-4">
+      <div className="chatbot-card shadow-lg p-0">
+        <div className="chatbot-header text-center py-3">
+          <h4 className="m-0">💬 Legal AI Assistant</h4>
+          <p className="text-muted small m-0">Ask legal questions anytime</p>
+        </div>
+
+        <div className="chat-window p-3">
+          {history.length === 0 && (
+            <p className="text-center text-muted mt-4">
+              👋 Start by typing your question below.
+            </p>
+          )}
+          {history.map((h, i) => (
+            <div key={i} className="chat-message mb-3">
+              <div className="user-msg text-end">
+                <div className="msg-bubble user-bubble">{h.q}</div>
+              </div>
+              <div className="bot-msg text-start">
+                <div className="msg-bubble bot-bubble">{h.a}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="chat-input p-3 border-top">
+          <div className="input-group">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Type your legal question..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()}
+            />
+            <button
+              className="btn btn-primary"
+              onClick={send}
+              disabled={loading}
+            >
+              {loading ? "..." : "Send"}
+            </button>
           </div>
-        ))}
-      </div>
-      <div className="d-flex">
-        <input className="form-control me-2" value={input} onChange={e=>setInput(e.target.value)} placeholder="Ask legal question..." />
-        <button className="btn btn-primary" onClick={send}>Send</button>
+        </div>
       </div>
     </div>
   );

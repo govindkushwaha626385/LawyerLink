@@ -1,55 +1,183 @@
-// src/components/Profile/ProfilePage.js
 import React, { useEffect, useState } from "react";
-import { auth, db, storage } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { onAuthStateChanged } from "firebase/auth";
+import "./Profile.css";
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState(null);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const user = auth.currentUser;
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({});
 
+  // Fetch user profile
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const d = await getDoc(doc(db, "users", user.uid));
-      if (d.exists()) {
-        setUserData(d.data());
-        setName(d.data().displayName || "");
-        setPhone(d.data().phone || "");
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, "users", user.uid);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          setUserData(snap.data());
+          setForm(snap.data());
+        }
       }
-    })();
-  }, [user]);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const handleSave = async () => {
-    if (!user) return alert("Not logged in");
-    await updateDoc(doc(db, "users", user.uid), { displayName: name, phone });
-    alert("Profile updated");
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleImage = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const refStorage = ref(storage, `avatars/${user.uid}`);
-    await uploadBytes(refStorage, file);
-    const url = await getDownloadURL(refStorage);
-    await updateDoc(doc(db, "users", user.uid), { image: url });
-    setUserData(prev => ({ ...prev, image: url }));
+  const handleUpdate = async () => {
+    try {
+      const docRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(docRef, form);
+      setUserData(form);
+      setEditing(false);
+      alert("Profile updated successfully ✅");
+    } catch (err) {
+      console.error(err);
+      alert("Error updating profile ❌");
+    }
   };
 
-  if (!userData) return <div className="container mt-4">Loading...</div>;
+  if (loading) return <div className="text-center mt-5">Loading...</div>;
+  if (!userData) return <div className="text-center mt-5">No user data found</div>;
+
+  const isLawyer = userData.role === "lawyer";
 
   return (
-    <div className="container mt-4 col-md-6">
-      <h4>My Profile</h4>
-      <div className="mb-2">
-        <img src={userData.image || "https://via.placeholder.com/120"} alt="avatar" width="120" className="rounded-circle" />
+    <div className="container mt-5 py-4">
+      <div className="card shadow-lg border-0 rounded-4 profile-card mx-auto">
+        <div className="card-body text-center">
+          <img
+            src={
+              userData.image ||
+              "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+            }
+            alt="Profile"
+            className="profile-avatar mb-3"
+          />
+          <h4 className="fw-bold text-primary mb-1">
+            {userData.fullName || "Unnamed User"}
+          </h4>
+          <p className="text-muted mb-3">
+            Role: {userData.role?.toUpperCase() || "N/A"}
+          </p>
+
+          {editing ? (
+            <>
+              <div className="row g-3 text-start">
+                <div className="col-md-6">
+                  <label className="form-label">Full Name</label>
+                  <input
+                    name="fullName"
+                    value={form.fullName || ""}
+                    onChange={handleChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Email</label>
+                  <input
+                    name="email"
+                    value={form.email || ""}
+                    className="form-control"
+                    disabled
+                  />
+                </div>
+
+                {isLawyer && (
+                  <>
+                    <div className="col-md-6">
+                      <label className="form-label">Phone Number</label>
+                      <input
+                        name="phone"
+                        value={form.phone || ""}
+                        onChange={handleChange}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Address</label>
+                      <input
+                        name="address"
+                        value={form.address || ""}
+                        onChange={handleChange}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Experience (years)</label>
+                      <input
+                        type="number"
+                        name="experience"
+                        value={form.experience || ""}
+                        onChange={handleChange}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Category</label>
+                      <input
+                        name="category"
+                        value={form.category || ""}
+                        onChange={handleChange}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Advocate Number</label>
+                      <input
+                        name="advocateNumber"
+                        value={form.advocateNumber || ""}
+                        onChange={handleChange}
+                        className="form-control"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="mt-4">
+                <button className="btn btn-success me-2" onClick={handleUpdate}>
+                  💾 Save
+                </button>
+                <button
+                  className="btn btn-outline-secondary"
+                  onClick={() => setEditing(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-3 text-start mx-auto" style={{ maxWidth: 500 }}>
+                <p><strong>Email:</strong> {userData.email}</p>
+                {isLawyer && (
+                  <>
+                    <p><strong>Phone:</strong> {userData.phone || "N/A"}</p>
+                    <p><strong>Address:</strong> {userData.address || "N/A"}</p>
+                    <p><strong>Experience:</strong> {userData.experience || "N/A"} yrs</p>
+                    <p><strong>Category:</strong> {userData.category || "N/A"}</p>
+                    <p><strong>Advocate Number:</strong> {userData.advocateNumber || "N/A"}</p>
+                  </>
+                )}
+              </div>
+
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => setEditing(true)}
+              >
+                ✏️ Edit Profile
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <input type="file" className="form-control mb-2" onChange={handleImage} />
-      <input className="form-control mb-2" value={name} onChange={e => setName(e.target.value)} />
-      <input className="form-control mb-2" value={phone} onChange={e => setPhone(e.target.value)} />
-      <button className="btn btn-primary" onClick={handleSave}>Save</button>
     </div>
   );
 }
