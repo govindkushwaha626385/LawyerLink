@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+transformers
+sentence-transformers
+torch
+faiss-cpu
+pandas
+scikit-learn
+huggingface_hub
+python-multipart
+numpy

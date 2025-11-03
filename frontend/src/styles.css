@@ -1,0 +1,7 @@
+/* simple custom styles */
+body { background: #f8f9fa; }
+.app-container { min-height: 100vh; display:flex; flex-direction:column; }
+.content { flex:1; padding-top: 70px; padding-bottom: 40px; }
+.card-lawyer { transition: box-shadow .15s ease; }
+.card-lawyer:hover { box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.chat-window { height: 320px; overflow-y: auto; background: #fff; padding: 12px; border-radius: 6px; }
