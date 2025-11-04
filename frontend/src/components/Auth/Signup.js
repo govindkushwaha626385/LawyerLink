@@ -25,33 +25,47 @@ export default function Signup() {
   };
 
   const handleSignup = async () => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Common user fields
-      const userData = {
-        email,
-        role,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Add lawyer-specific data if role is "lawyer"
-      if (role === "lawyer") {
-        Object.assign(userData, {
-          ...lawyerInfo,
-          casesHandled: 0,
-          rating: 0,
-          image: "",
-        });
-      }
-
-      await setDoc(doc(db, "users", result.user.uid), userData);
-
-      navigate(role === "lawyer" ? "/lawyer" : "/litigant");
-    } catch (e) {
-      alert(e.message);
+  try {
+    if (!email || !password) {
+      alert("Please enter email and password.");
+      return;
     }
-  };
+
+    // Create Firebase Auth user
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    const user = result.user;
+
+    // Common user fields
+    const userData = {
+      uid: user.uid,
+      email,
+      role,
+      fullName: lawyerInfo.fullName || "",
+      phone: lawyerInfo.phone || "",
+      address: lawyerInfo.address || "",
+      experience: lawyerInfo.experience || "",
+      category: lawyerInfo.category || "",
+      advocateNumber: lawyerInfo.advocateNumber || "",
+      image: "",
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add lawyer-specific extra fields
+    if (role === "lawyer") {
+      userData.casesHandled = 0;
+      userData.rating = 0;
+    }
+
+    // Save user data in Firestore under users/{uid}
+    await setDoc(doc(db, "users", user.uid), userData);
+
+    alert("Signup successful ✅");
+    navigate(role === "lawyer" ? "/lawyer" : "/litigant");
+  } catch (e) {
+    console.error("Signup error:", e);
+    alert("Error: " + e.message);
+  }
+};
 
   return (
     <div className="container d-flex align-items-center justify-content-center min-vh-100">

@@ -11,20 +11,27 @@ export default function ProfilePage() {
   const [form, setForm] = useState({});
 
   // Fetch user profile
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          setUserData(snap.data());
-          setForm(snap.data());
-        }
+ useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    console.log("Auth user:", user);
+    if (user) {
+      const docRef = doc(db, "users", user.uid);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        console.log("User data:", snap.data());
+        setUserData(snap.data());
+        setForm(snap.data());
+      } else {
+        console.log("No such document in Firestore!");
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    } else {
+      console.log("User not logged in");
+    }
+    setLoading(false);
+  });
+  return () => unsubscribe();
+}, []);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });

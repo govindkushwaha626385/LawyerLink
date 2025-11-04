@@ -12,7 +12,7 @@ app = FastAPI()
 # Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # update to ["http://localhost:3000"] in production
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,7 +21,7 @@ app.add_middleware(
 sys.modules["faiss.swigfaiss_avx2"] = faiss
 
 
-# --- Recommendation model files ---
+# Recommendation model files
 rec_repo = "govindkushwaha6263/recommodation-model"
 
 sentence_model_path = hf_hub_download(repo_id=rec_repo, filename="sentence_model.pkl")

@@ -1,9 +1,8 @@
-// src/components/Navbar.js
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase"; // import your Firebase setup
+import { db } from "../firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../App.css";
 
@@ -24,7 +23,7 @@ export default function Navbar() {
           const docRef = doc(db, "users", currentUser.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setRole(docSnap.data().role); // "lawyer" or "litigant"
+            setRole(docSnap.data().role);
           }
         } catch (error) {
           console.error("Error fetching user role:", error);
