@@ -41,6 +41,12 @@ export default function Navbar() {
     navigate("/");
   };
 
+  const handleDashboardClick = () => {
+    if (!role) return; // If role not loaded yet, do nothing
+    if (role === "lawyer") navigate("/lawyer");
+    else if (role === "litigant") navigate("/litigant");
+  };
+
   return (
     <nav
       className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top"
@@ -101,6 +107,21 @@ export default function Navbar() {
                 Chatbot
               </Link>
             </li>
+
+            {/* ✅ Dashboard Button (Dynamic Redirect) */}
+            {/* ✅ Dashboard Button — visible only when user logged in */}
+            {user && (role === "lawyer" || role === "litigant") && (
+              <li className="nav-item mx-2">
+                <button
+                  onClick={handleDashboardClick}
+                  className="btn btn-outline-success px-4 py-1 rounded-pill fw-semibold"
+                  style={{ fontSize: "0.9rem" }}
+                >
+                  Dashboard
+                </button>
+              </li>
+            )}
+
 
             {/* Dynamic Auth Buttons */}
             {user ? (

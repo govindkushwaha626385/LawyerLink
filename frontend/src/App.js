@@ -23,6 +23,7 @@ import LinkCase from "./pages/LinkCase";
 
 // --- Litigant Pages ---
 import LitigantDashboard from "./pages/LitigantDashboard";
+import LitigantCaseDetails from "./pages/LitigantCaseDetails";
 
 // --- Other Features ---
 import Chatbot from "./components/Chatbot/Chatbot";
@@ -99,6 +100,14 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/litigant/case/:id"
+              element={<ProtectedRoute>
+                <LitigantCaseDetails />
+              </ProtectedRoute>}
+            />
+
             <Route
               path="/case/:id"
               element={

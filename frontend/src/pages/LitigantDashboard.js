@@ -8,6 +8,8 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+
 import { db, auth } from "../firebase";
 import {
   Card,
@@ -28,6 +30,8 @@ export default function LitigantDashboard() {
   const [advocateNumber, setAdvocateNumber] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  const navigate = useNavigate();
 
   // ✅ Fetch litigant's cases
   useEffect(() => {
@@ -146,7 +150,7 @@ export default function LitigantDashboard() {
       <h2 className="text-center mb-4 fw-bold">📜 My Cases</h2>
 
       {/* ✅ CASE LINKING FORM */}
-      <Card
+      {/* <Card
         className="shadow-sm border-0 rounded-4 p-4 mx-auto mb-5"
         style={{ maxWidth: "500px" }}
       >
@@ -188,7 +192,7 @@ export default function LitigantDashboard() {
             {linkLoading ? "Linking..." : "Link Case"}
           </Button>
         </Form>
-      </Card>
+      </Card> */}
 
       {/* ✅ CASES LIST */}
       {cases.length === 0 ? (
@@ -205,7 +209,7 @@ export default function LitigantDashboard() {
                     {c.title || "Untitled Case"}
                   </Card.Title>
                   <Card.Subtitle className="mb-2 text-muted">
-                    Case ID: {c.id}
+                    Case ID: {c.case_id}
                   </Card.Subtitle>
 
                   <p className="mb-1">
@@ -218,6 +222,18 @@ export default function LitigantDashboard() {
                     <strong>Status:</strong> {c.status || "Pending"}
                   </p>
 
+                  <div
+                    className="p-3 rounded-3 shadow-sm mt-2"
+                    style={{
+                      backgroundColor: "#e8f0fe",
+                      fontWeight: "700",
+                      color: "#0d47a1",
+                      borderLeft: "5px solid #0d47a1",
+                    }}
+                  >
+                    🪪 Next Hearing Date: <span className="text-dark">{c.next_hearing_date}</span>
+                  </div>
+
                   <ProgressBar
                     now={c.progress || 40}
                     label={`${c.progress || 40}%`}
@@ -225,7 +241,10 @@ export default function LitigantDashboard() {
                   />
 
                   <div className="d-flex justify-content-between align-items-center mt-3">
-                    <button className="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <button
+                      className="btn btn-outline-primary btn-sm rounded-pill px-3"
+                      onClick={() => navigate(`/litigant/case/${c.id}`)}
+                    >
                       View Details
                     </button>
                     <span className="badge bg-success px-3 py-2 rounded-pill">

@@ -103,18 +103,29 @@ export default function LawyerDashboard() {
                           c.status === "Closed"
                             ? "danger"
                             : c.status === "In Progress"
-                            ? "warning"
-                            : "info"
+                              ? "warning"
+                              : "info"
                         }
                         className="rounded-pill px-3 py-2"
                       >
                         {c.status}
                       </Badge>
                       <div className="mt-2 small text-muted">
-                        🧾 Case ID: <strong>{c.id}</strong>
+                        🧾 Case ID: <strong>{c.case_id}</strong>
                       </div>
                       <div className="small text-muted">
                         🪪 Advocate No: <strong>{c.advocateNumber}</strong>
+                      </div>
+                      <div
+                        className="p-3 rounded-3 shadow-sm mt-2"
+                        style={{
+                          backgroundColor: "#e8f0fe",
+                          fontWeight: "700",
+                          color: "#0d47a1",
+                          borderLeft: "5px solid #0d47a1",
+                        }}
+                      >
+                        🪪 Next Hearing Date: <span className="text-dark">{c.next_hearing_date}</span>
                       </div>
                     </Card.Body>
                   </Card>

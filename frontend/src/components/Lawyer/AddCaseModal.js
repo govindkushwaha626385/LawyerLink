@@ -1,4 +1,3 @@
-// src/components/Lawyer/AddCaseModal.js
 import React, { useState, useEffect } from "react";
 import {
   collection,
@@ -18,6 +17,7 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
     clientPhone: "",
     category: "",
     description: "",
+    next_hearing_date: "",
     status: "Open",
   });
 
@@ -163,6 +163,21 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
                     value={caseData.clientPhone}
                     onChange={handleChange}
                     placeholder="Optional"
+                  />
+                </div>
+
+                {/* ✅ New Hearing Date (Calendar Input) */}
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">
+                    Next Hearing Date
+                  </label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    name="next_hearing_date"
+                    value={caseData.next_hearing_date}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 

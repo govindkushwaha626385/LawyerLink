@@ -131,6 +131,30 @@ export default function CaseDetails() {
               <p className="mb-1">
                 <strong>Category:</strong> {caseData.category}
               </p>
+
+              {/* 🪪 Editable Next Hearing Date */}
+              <div
+                className="p-3 rounded-3 shadow-sm mt-2"
+                style={{
+                  backgroundColor: "#e8f0fe",
+                  fontWeight: "700",
+                  color: "#0d47a1",
+                  borderLeft: "5px solid #0d47a1",
+                }}
+              >
+                🪪 Next Hearing Date:{" "}
+                {isEditing ? (
+                  <input
+                    type="date"
+                    name="next_hearing_date"
+                    className="form-control d-inline-block w-auto ms-2"
+                    value={updatedData.next_hearing_date || ""}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  <span className="text-dark">{caseData.next_hearing_date || "N/A"}</span>
+                )}
+              </div>
             </div>
 
             <div className="col-md-6 text-md-end">

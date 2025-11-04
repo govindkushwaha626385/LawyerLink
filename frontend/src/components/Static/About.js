@@ -1,22 +1,21 @@
-// src/components/About.js
+// ✅ src/components/About.js
 import React from "react";
+import lawImage from "../../images/law.jpg"; // ✅ Correct way to import
 
 export default function About() {
   return (
     <div
       className="py-5"
       style={{
-        background: "linear-gradient(135deg, #e8f0fe, #ffffff)",
+        background: "linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%)",
         minHeight: "100vh",
+        fontFamily: "Poppins, sans-serif",
       }}
     >
       <div className="container py-5">
-        {/* Header Section */}
+        {/* 🌟 Header */}
         <div className="text-center mb-5">
-          <h1
-            className="fw-bold text-primary"
-            style={{ fontFamily: "Poppins, sans-serif", letterSpacing: "1px" }}
-          >
+          <h1 className="fw-bold text-primary display-5">
             ⚖️ About <span className="text-dark">LawyerLink</span>
           </h1>
           <p
@@ -28,54 +27,52 @@ export default function About() {
           </p>
         </div>
 
-        {/* Main Content */}
+        {/* 💡 Main Section */}
         <div className="row align-items-center justify-content-center g-5">
-          {/* Image Section */}
-          <div className="col-lg-6 col-md-10">
+          {/* 🖼️ Image */}
+          <div className="col-lg-6 col-md-10 text-center">
             <div
-              className="position-relative"
+              className="shadow-lg overflow-hidden rounded-4 position-relative"
               style={{
-                overflow: "hidden",
-                borderRadius: "1rem",   
+                transition: "transform 0.6s ease",
+                border: "4px solid #e3f2fd",
               }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "scale(1.03)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "scale(1)")
+              }
             >
               <img
-                src="frontend/src/images/law.jpg"
-                alt="Law and justice illustration"
-                className="img-fluid shadow-lg"
+                src={lawImage}
+                alt="Law and Justice"
+                className="img-fluid"
                 style={{
-                  transform: "scale(1)",
-                  transition: "transform 0.4s ease-in-out",
                   borderRadius: "1rem",
+                  width: "100%",
+                  height: "auto",
                 }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "scale(1.05)";
-                  e.currentTarget.style.boxShadow = "0 10px 20px rgba(0, 0, 0, 0.3)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.1)";
-                }}
-
               />
             </div>
-
           </div>
 
-          {/* Text Section */}
+          {/* 🧾 Text */}
           <div className="col-lg-6 col-md-10">
             <div
               className="card border-0 shadow-lg rounded-4 p-4 p-md-5"
               style={{
-                backgroundColor: "#ffffff",
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                background:
+                  "linear-gradient(135deg, rgba(227,242,253,0.7), #ffffff)",
+                backdropFilter: "blur(10px)",
+                transition: "0.3s all ease",
               }}
             >
-              <h3 className="text-primary fw-semibold mb-3">Who We Are</h3>
+              <h3 className="text-primary fw-bold mb-3">Who We Are</h3>
               <p className="text-muted lh-lg">
                 <strong>LawyerLink</strong> bridges the gap between{" "}
                 <strong>litigants</strong> and <strong>lawyers</strong> using
-                technology and trust. Our mission is to make legal help
+                modern technology and trust. Our mission is to make legal help
                 accessible, transparent, and intelligent for everyone.
               </p>
 
@@ -97,15 +94,17 @@ export default function About() {
           </div>
         </div>
 
-        {/* Quote Section */}
+        {/* 🕊️ Quote */}
         <div className="text-center mt-5">
           <blockquote
             className="fst-italic text-secondary"
             style={{
-              fontSize: "1.25rem",
+              fontSize: "1.3rem",
               maxWidth: "600px",
               margin: "0 auto",
               fontFamily: "Lora, serif",
+              borderLeft: "4px solid #0d47a1",
+              paddingLeft: "1rem",
             }}
           >
             “Justice made accessible, digital, and intelligent.”
