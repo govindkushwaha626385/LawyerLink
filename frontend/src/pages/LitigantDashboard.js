@@ -4,9 +4,9 @@ import {
   getDocs,
   query,
   where,
-  doc,
-  getDoc,
-  updateDoc,
+  // doc,
+  // getDoc,
+  // updateDoc,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
@@ -15,9 +15,9 @@ import {
   Card,
   ProgressBar,
   Spinner,
-  Form,
-  Button,
-  Alert,
+  // Form,
+  // Button,
+  // Alert,
   Container,
 } from "react-bootstrap";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -26,10 +26,10 @@ export default function LitigantDashboard() {
   const [user] = useAuthState(auth);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [caseId, setCaseId] = useState("");
-  const [advocateNumber, setAdvocateNumber] = useState("");
-  const [linkLoading, setLinkLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  // const [caseId, setCaseId] = useState("");
+  // const [advocateNumber, setAdvocateNumber] = useState("");
+  // const [linkLoading, setLinkLoading] = useState(false);
+  // const [message, setMessage] = useState({ type: "", text: "" });
 
   const navigate = useNavigate();
 
@@ -60,73 +60,73 @@ export default function LitigantDashboard() {
   }, [user]);
 
   // ✅ Link existing case using Case ID and Advocate Number
-  const handleLinkCase = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      setMessage({ type: "danger", text: "Please log in first." });
-      return;
-    }
+  // const handleLinkCase = async (e) => {
+  //   e.preventDefault();
+  //   if (!user) {
+  //     setMessage({ type: "danger", text: "Please log in first." });
+  //     return;
+  //   }
 
-    try {
-      setLinkLoading(true);
-      setMessage({ type: "", text: "" });
+  //   try {
+  //     // setLinkLoading(true);
+  //     // setMessage({ type: "", text: "" });
 
-      const caseRef = doc(db, "cases", caseId);
-      const caseSnap = await getDoc(caseRef);
+  //     const caseRef = doc(db, "cases", caseId);
+  //     const caseSnap = await getDoc(caseRef);
 
-      if (!caseSnap.exists()) {
-        setMessage({ type: "danger", text: "❌ Case not found. Check Case ID." });
-        return;
-      }
+  //     if (!caseSnap.exists()) {
+  //       setMessage({ type: "danger", text: "❌ Case not found. Check Case ID." });
+  //       return;
+  //     }
 
-      const caseData = caseSnap.data();
+  //     const caseData = caseSnap.data();
 
-      if (caseData.clientEmail) {
-        setMessage({
-          type: "danger",
-          text: "⚠️ This case is already linked to another litigant.",
-        });
-        return;
-      }
+  //     if (caseData.clientEmail) {
+  //       setMessage({
+  //         type: "danger",
+  //         text: "⚠️ This case is already linked to another litigant.",
+  //       });
+  //       return;
+  //     }
 
-      if (caseData.advocateNumber !== advocateNumber) {
-        setMessage({
-          type: "danger",
-          text: "❌ Advocate Number does not match this case.",
-        });
-        return;
-      }
+  //     if (caseData.advocateNumber !== advocateNumber) {
+  //       setMessage({
+  //         type: "danger",
+  //         text: "❌ Advocate Number does not match this case.",
+  //       });
+  //       return;
+  //     }
 
-      // ✅ Link litigant details to case
-      await updateDoc(caseRef, {
-        clientEmail: user.email,
-        clientName: user.displayName || "Litigant",
-        litigantId: user.uid,
-        linkedAt: new Date().toISOString(),
-      });
+  //     // ✅ Link litigant details to case
+  //     await updateDoc(caseRef, {
+  //       clientEmail: user.email,
+  //       clientName: user.displayName || "Litigant",
+  //       litigantId: user.uid,
+  //       linkedAt: new Date().toISOString(),
+  //     });
 
-      setMessage({
-        type: "success",
-        text: "✅ Case successfully linked to your dashboard!",
-      });
+  //     setMessage({
+  //       type: "success",
+  //       text: "✅ Case successfully linked to your dashboard!",
+  //     });
 
-      // Refresh case list
-      const q = query(
-        collection(db, "cases"),
-        where("clientEmail", "==", user.email)
-      );
-      const querySnapshot = await getDocs(q);
-      setCases(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  //     // Refresh case list
+  //     const q = query(
+  //       collection(db, "cases"),
+  //       where("clientEmail", "==", user.email)
+  //     );
+  //     const querySnapshot = await getDocs(q);
+  //     setCases(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
 
-      setCaseId("");
-      setAdvocateNumber("");
-    } catch (error) {
-      console.error("Error linking case:", error);
-      setMessage({ type: "danger", text: "❌ Failed to link case. Try again." });
-    } finally {
-      setLinkLoading(false);
-    }
-  };
+  //     setCaseId("");
+  //     setAdvocateNumber("");
+  //   } catch (error) {
+  //     console.error("Error linking case:", error);
+  //     setMessage({ type: "danger", text: "❌ Failed to link case. Try again." });
+  //   } finally {
+  //     setLinkLoading(false);
+  //   }
+  // };
 
   // ✅ Loading states
   if (!user)

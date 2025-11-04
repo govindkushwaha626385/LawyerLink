@@ -23,7 +23,7 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
 
   const [loading, setLoading] = useState(false);
   const [advocateNumber, setAdvocateNumber] = useState(propAdvocateNumber || "");
-  const [caseId, setCaseId] = useState(null);
+  // const [caseId, setCaseId] = useState(null);
   const user = auth.currentUser;
 
   // ✅ Fetch advocateNumber if not passed as prop
@@ -64,7 +64,7 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
         date: new Date().toLocaleDateString(),
       });
 
-      setCaseId(generatedCaseId);
+      // setCaseId(generatedCaseId);
       alert(`✅ Case added successfully!\nCase ID: ${generatedCaseId}`);
       onClose();
       window.location.reload(); // refresh dashboard to show new case
