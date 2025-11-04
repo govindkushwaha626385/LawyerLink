@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [lawyerInfo, setLawyerInfo] = useState({
+  const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
     address: "",
@@ -21,59 +21,60 @@ export default function Signup() {
   const role = new URLSearchParams(location.search).get("role") || "litigant";
 
   const handleChange = (e) => {
-    setLawyerInfo({ ...lawyerInfo, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSignup = async () => {
-  try {
-    if (!email || !password) {
-      alert("Please enter email and password.");
-      return;
+    try {
+      if (!email || !password) {
+        alert("Please enter email and password.");
+        return;
+      }
+
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+
+      const userData = {
+        uid: user.uid,
+        email,
+        role,
+        fullName: formData.fullName || "",
+        phone: formData.phone || "",
+        address: formData.address || "",
+        createdAt: new Date().toISOString(),
+        image: "",
+      };
+
+      // Add lawyer-only fields
+      if (role === "lawyer") {
+        userData.experience = formData.experience || "";
+        userData.category = formData.category || "";
+        userData.advocateNumber = formData.advocateNumber || "";
+        userData.casesHandled = 0;
+        userData.rating = 0;
+      }
+
+      await setDoc(doc(db, "users", user.uid), userData);
+
+      alert("Signup successful ✅");
+      navigate(role === "lawyer" ? "/lawyer" : "/litigant");
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Error: " + error.message);
     }
-
-    // Create Firebase Auth user
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    const user = result.user;
-
-    // Common user fields
-    const userData = {
-      uid: user.uid,
-      email,
-      role,
-      fullName: lawyerInfo.fullName || "",
-      phone: lawyerInfo.phone || "",
-      address: lawyerInfo.address || "",
-      experience: lawyerInfo.experience || "",
-      category: lawyerInfo.category || "",
-      advocateNumber: lawyerInfo.advocateNumber || "",
-      image: "",
-      createdAt: new Date().toISOString(),
-    };
-
-    // Add lawyer-specific extra fields
-    if (role === "lawyer") {
-      userData.casesHandled = 0;
-      userData.rating = 0;
-    }
-
-    // Save user data in Firestore under users/{uid}
-    await setDoc(doc(db, "users", user.uid), userData);
-
-    alert("Signup successful ✅");
-    navigate(role === "lawyer" ? "/lawyer" : "/litigant");
-  } catch (e) {
-    console.error("Signup error:", e);
-    alert("Error: " + e.message);
-  }
-};
+  };
 
   return (
     <div className="container d-flex align-items-center justify-content-center min-vh-100">
-      <div className="card shadow-lg border-0 rounded-4 p-4 p-md-5 w-100" style={{ maxWidth: "500px" }}>
+      <div
+        className="card shadow-lg border-0 rounded-4 p-4 p-md-5 w-100"
+        style={{ maxWidth: "500px" }}
+      >
         <h3 className="text-center mb-4 fw-bold text-primary">
           Signup as {role.charAt(0).toUpperCase() + role.slice(1)}
         </h3>
 
+        {/* Common fields */}
         <div className="mb-3">
           <label className="form-label fw-semibold">Email</label>
           <input
@@ -96,45 +97,45 @@ export default function Signup() {
           />
         </div>
 
-        {/* Show extra fields only for lawyers */}
+        <div className="mb-3">
+          <label className="form-label fw-semibold">Full Name</label>
+          <input
+            type="text"
+            className="form-control rounded-3"
+            placeholder="John Doe"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label fw-semibold">Phone Number</label>
+          <input
+            type="tel"
+            className="form-control rounded-3"
+            placeholder="+91 9876543210"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label fw-semibold">Address</label>
+          <textarea
+            className="form-control rounded-3"
+            placeholder="Enter your full address"
+            rows="2"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+          ></textarea>
+        </div>
+
+        {/* Lawyer-only fields */}
         {role === "lawyer" && (
           <>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Full Name</label>
-              <input
-                type="text"
-                className="form-control rounded-3"
-                placeholder="John Doe"
-                name="fullName"
-                value={lawyerInfo.fullName}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Phone Number</label>
-              <input
-                type="tel"
-                className="form-control rounded-3"
-                placeholder="+91 9876543210"
-                name="phone"
-                value={lawyerInfo.phone}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Address</label>
-              <textarea
-                className="form-control rounded-3"
-                placeholder="Enter your full office address"
-                rows="2"
-                name="address"
-                value={lawyerInfo.address}
-                onChange={handleChange}
-              ></textarea>
-            </div>
-
             <div className="mb-3">
               <label className="form-label fw-semibold">Years of Experience</label>
               <input
@@ -142,7 +143,7 @@ export default function Signup() {
                 className="form-control rounded-3"
                 placeholder="e.g., 5"
                 name="experience"
-                value={lawyerInfo.experience}
+                value={formData.experience}
                 onChange={handleChange}
               />
             </div>
@@ -152,7 +153,7 @@ export default function Signup() {
               <select
                 className="form-select rounded-3"
                 name="category"
-                value={lawyerInfo.category}
+                value={formData.category}
                 onChange={handleChange}
               >
                 <option value="">Select category</option>
@@ -172,20 +173,26 @@ export default function Signup() {
                 className="form-control rounded-3"
                 placeholder="e.g., A12345XYZ"
                 name="advocateNumber"
-                value={lawyerInfo.advocateNumber}
+                value={formData.advocateNumber}
                 onChange={handleChange}
               />
             </div>
           </>
         )}
 
-        <button className="btn btn-primary w-100 rounded-3 py-2 fw-semibold" onClick={handleSignup}>
+        <button
+          className="btn btn-primary w-100 rounded-3 py-2 fw-semibold"
+          onClick={handleSignup}
+        >
           Signup
         </button>
 
         <p className="text-center mt-3 text-muted">
           Already have an account?{" "}
-          <a href={`/login?role=${role}`} className="text-decoration-none fw-semibold">
+          <a
+            href={`/login?role=${role}`}
+            className="text-decoration-none fw-semibold"
+          >
             Login
           </a>
         </p>

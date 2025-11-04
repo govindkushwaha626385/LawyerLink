@@ -1,71 +1,86 @@
-.chatbot-container {
-  max-width: 600px;
-  margin: auto;
+.chatbot-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e3f2fd, #f1f8e9);
 }
 
 .chatbot-card {
+  width: 100%;
+  max-width: 600px;
   border-radius: 20px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  background: #ffffff;
+  transition: transform 0.3s ease;
+}
+
+.chatbot-card:hover {
+  transform: translateY(-5px);
 }
 
 .chatbot-header {
-  background: linear-gradient(135deg, #007bff, #6610f2);
+  background: linear-gradient(90deg, #1976d2, #64b5f6);
   color: white;
 }
 
 .chat-window {
+  flex: 1;
   height: 60vh;
   overflow-y: auto;
-  background: #f9f9f9;
-  border-bottom: 1px solid #ddd;
-  scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
-}
-
-.chat-window::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-window::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 3px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  border-top: 1px solid #eee;
+  border-radius: 12px;
+  padding: 1rem;
+  scroll-behavior: smooth;
 }
 
 .msg-bubble {
   display: inline-block;
-  padding: 10px 14px;
-  border-radius: 18px;
+  padding: 10px 15px;
+  border-radius: 20px;
   max-width: 80%;
   word-wrap: break-word;
+  font-size: 15px;
+  line-height: 1.4;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .user-bubble {
-  background: #007bff;
+  background: #1976d2;
   color: white;
   border-bottom-right-radius: 4px;
 }
 
 .bot-bubble {
-  background: #e9ecef;
+  background: #e3f2fd;
   color: #333;
   border-bottom-left-radius: 4px;
 }
 
 .chat-input {
-  background-color: #fff;
+  border-top: 1px solid #eee;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .chatbot-container {
-    padding: 0 10px;
+  .chatbot-card {
+    max-width: 100%;
+    height: 90vh;
   }
 
   .chat-window {
     height: 65vh;
-  }
-
-  .msg-bubble {
-    max-width: 100%;
   }
 }

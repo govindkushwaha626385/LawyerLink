@@ -1,8 +1,8 @@
-// src/components/Lawyer/CaseDetails.js
+// ✅ src/components/Lawyer/CaseDetails.js
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db, auth } from "../../firebase";
 import axios from "axios";
 import "./CaseDetails.css";
 
@@ -12,8 +12,11 @@ export default function CaseDetails() {
   const [recommendedCases, setRecommendedCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recLoading, setRecLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updatedData, setUpdatedData] = useState({});
+  const user = auth.currentUser;
 
-  // ✅ Fetch selected case details
+  // ✅ Fetch selected case details from Firestore
   useEffect(() => {
     const fetchCase = async () => {
       try {
@@ -22,6 +25,7 @@ export default function CaseDetails() {
         if (docSnap.exists()) {
           const data = { id: docSnap.id, ...docSnap.data() };
           setCaseData(data);
+          setUpdatedData(data);
           fetchRecommendedCases(data.description);
         } else {
           console.error("No such case found!");
@@ -35,7 +39,7 @@ export default function CaseDetails() {
     fetchCase();
   }, [id]);
 
-  // ✅ Fetch AI-based recommendations from FastAPI
+  // ✅ Fetch AI-based case recommendations
   const fetchRecommendedCases = async (text) => {
     setRecLoading(true);
     try {
@@ -48,6 +52,28 @@ export default function CaseDetails() {
       console.error("Error fetching recommended cases:", error);
     } finally {
       setRecLoading(false);
+    }
+  };
+
+  // ✅ Handle edits
+  const handleChange = (e) => {
+    setUpdatedData({ ...updatedData, [e.target.name]: e.target.value });
+  };
+
+  // ✅ Save updated data
+  const handleUpdate = async () => {
+    try {
+      const caseRef = doc(db, "cases", id);
+      await updateDoc(caseRef, {
+        ...updatedData,
+        lastUpdated: new Date().toISOString(),
+      });
+      setCaseData(updatedData);
+      setIsEditing(false);
+      alert("✅ Case updated successfully!");
+    } catch (error) {
+      console.error("Error updating case:", error);
+      alert("❌ Failed to update case. Please try again.");
     }
   };
 
@@ -66,15 +92,38 @@ export default function CaseDetails() {
       </div>
     );
 
+  const isLawyerOwner = user && user.uid === caseData.lawyerId;
+
   return (
     <div className="container py-5">
       {/* 🧾 Case Info Card */}
       <div className="card shadow-sm border-0 rounded-4 mb-4">
         <div className="card-body">
-          <h3 className="fw-bold mb-3 text-primary">{caseData.title}</h3>
+          <div className="d-flex justify-content-between align-items-center">
+            <h3 className="fw-bold mb-3 text-primary">{caseData.title}</h3>
+            {isLawyerOwner && !isEditing && (
+              <button
+                className="btn btn-outline-primary btn-sm rounded-pill"
+                onClick={() => setIsEditing(true)}
+              >
+                ✏️ Edit Case
+              </button>
+            )}
+          </div>
 
+          {/* Case Info */}
           <div className="row mb-2">
             <div className="col-md-6">
+              <p className="mb-1">
+                <strong>Case ID:</strong>{" "}
+                <span className="text-primary fw-semibold">
+                  {caseData.case_id || "N/A"}
+                </span>
+              </p>
+              <p className="mb-1">
+                <strong>Advocate Number:</strong>{" "}
+                <span className="text-dark">{caseData.advocateNumber || "N/A"}</span>
+              </p>
               <p className="mb-1">
                 <strong>Client:</strong> {caseData.clientName} (
                 {caseData.clientEmail})
@@ -83,36 +132,88 @@ export default function CaseDetails() {
                 <strong>Category:</strong> {caseData.category}
               </p>
             </div>
+
             <div className="col-md-6 text-md-end">
               <p className="mb-1">
                 <strong>Status:</strong>{" "}
-                <span
-                  className={`badge ${
-                    caseData.status === "Closed"
-                      ? "bg-danger"
-                      : caseData.status === "In Progress"
-                      ? "bg-warning text-dark"
-                      : "bg-success"
-                  }`}
-                >
-                  {caseData.status}
-                </span>
+                {isEditing ? (
+                  <select
+                    name="status"
+                    className="form-select d-inline-block w-auto ms-2"
+                    value={updatedData.status}
+                    onChange={handleChange}
+                  >
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                ) : (
+                  <span
+                    className={`badge ${
+                      caseData.status === "Closed"
+                        ? "bg-danger"
+                        : caseData.status === "In Progress"
+                        ? "bg-warning text-dark"
+                        : "bg-success"
+                    }`}
+                  >
+                    {caseData.status}
+                  </span>
+                )}
               </p>
               <p className="text-muted small">
-                <i className="bi bi-calendar"></i> Created:{" "}
-                {caseData.date || "N/A"}
+                <i className="bi bi-calendar"></i> Created: {caseData.date || "N/A"}
               </p>
             </div>
           </div>
 
           <hr />
-          <p className="mt-2 text-secondary" style={{ whiteSpace: "pre-line" }}>
-            {caseData.description}
-          </p>
+
+          {/* Description */}
+          <div>
+            <strong>Description:</strong>
+            {isEditing ? (
+              <textarea
+                name="description"
+                className="form-control mt-2"
+                rows="4"
+                value={updatedData.description}
+                onChange={handleChange}
+              ></textarea>
+            ) : (
+              <p
+                className="mt-2 text-secondary"
+                style={{ whiteSpace: "pre-line" }}
+              >
+                {caseData.description}
+              </p>
+            )}
+          </div>
+
+          {/* Update Buttons */}
+          {isEditing && (
+            <div className="mt-3 text-end">
+              <button
+                className="btn btn-secondary rounded-pill me-2"
+                onClick={() => {
+                  setIsEditing(false);
+                  setUpdatedData(caseData);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-success rounded-pill"
+                onClick={handleUpdate}
+              >
+                💾 Save Changes
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 🔍 Recommended Cases Section */}
+      {/* 🔍 AI-Powered Recommended Cases */}
       <h4 className="fw-bold mb-4 text-primary text-center">
         🔍 AI-Powered Recommended Cases
       </h4>
@@ -166,7 +267,7 @@ export default function CaseDetails() {
         </div>
       )}
 
-      {/* 💅 Hover Animations */}
+      {/* 💅 Hover Animation */}
       <style>
         {`
           .lawyer-card {

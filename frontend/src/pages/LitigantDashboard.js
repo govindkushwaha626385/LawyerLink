@@ -19,14 +19,13 @@ import {
   Container,
 } from "react-bootstrap";
 import { useAuthState } from "react-firebase-hooks/auth";
-// import { auth } from "../../firebase";
 
 export default function LitigantDashboard() {
   const [user] = useAuthState(auth);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [caseId, setCaseId] = useState("");
-  const [advocateId, setAdvocateId] = useState("");
+  const [advocateNumber, setAdvocateNumber] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -56,7 +55,7 @@ export default function LitigantDashboard() {
     fetchCases();
   }, [user]);
 
-  // ✅ Link existing case using Case ID and Lawyer ID
+  // ✅ Link existing case using Case ID and Advocate Number
   const handleLinkCase = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -86,10 +85,10 @@ export default function LitigantDashboard() {
         return;
       }
 
-      if (caseData.lawyerId !== advocateId) {
+      if (caseData.advocateNumber !== advocateNumber) {
         setMessage({
           type: "danger",
-          text: "❌ Advocate ID does not match this case.",
+          text: "❌ Advocate Number does not match this case.",
         });
         return;
       }
@@ -116,7 +115,7 @@ export default function LitigantDashboard() {
       setCases(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
 
       setCaseId("");
-      setAdvocateId("");
+      setAdvocateNumber("");
     } catch (error) {
       console.error("Error linking case:", error);
       setMessage({ type: "danger", text: "❌ Failed to link case. Try again." });
@@ -125,7 +124,7 @@ export default function LitigantDashboard() {
     }
   };
 
-  // ✅ Show loading screen
+  // ✅ Loading states
   if (!user)
     return (
       <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-center">
@@ -141,6 +140,7 @@ export default function LitigantDashboard() {
       </div>
     );
 
+  // ✅ Render UI
   return (
     <Container className="mt-5">
       <h2 className="text-center mb-4 fw-bold">📜 My Cases</h2>
@@ -169,12 +169,12 @@ export default function LitigantDashboard() {
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Advocate ID</Form.Label>
+            <Form.Label>Advocate Number</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Enter Advocate ID"
-              value={advocateId}
-              onChange={(e) => setAdvocateId(e.target.value.trim())}
+              placeholder="Enter Advocate Number"
+              value={advocateNumber}
+              onChange={(e) => setAdvocateNumber(e.target.value.trim())}
               required
             />
           </Form.Group>
@@ -212,7 +212,7 @@ export default function LitigantDashboard() {
                     <strong>Category:</strong> {c.category || "Not specified"}
                   </p>
                   <p className="mb-1">
-                    <strong>Lawyer:</strong> {c.lawyerEmail || "Not assigned"}
+                    <strong>Advocate Number:</strong> {c.advocateNumber || "N/A"}
                   </p>
                   <p className="mb-1">
                     <strong>Status:</strong> {c.status || "Pending"}

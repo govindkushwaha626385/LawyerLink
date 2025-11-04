@@ -2,19 +2,20 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useNavigate } from "react-router-dom";
+import { Spinner, Badge } from "react-bootstrap";
 
-export default function MyCases({ lawyerId }) {
+export default function MyCases({ advocateNumber }) {
   const [cases, setCases] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Fetch all cases for the lawyer
+  // Fetch all cases for the logged-in advocate
   useEffect(() => {
     const fetchCases = async () => {
       try {
-        const q = query(collection(db, "cases"), where("lawyerId", "==", lawyerId));
+        const q = query(collection(db, "cases"), where("advocateNumber", "==", advocateNumber));
         const snapshot = await getDocs(q);
         const caseList = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -28,8 +29,8 @@ export default function MyCases({ lawyerId }) {
         setLoading(false);
       }
     };
-    fetchCases();
-  }, [lawyerId]);
+    if (advocateNumber) fetchCases();
+  }, [advocateNumber]);
 
   // Filter cases by status
   useEffect(() => {
@@ -41,21 +42,26 @@ export default function MyCases({ lawyerId }) {
   }, [status, cases]);
 
   if (loading)
-    return <div className="text-center mt-5">Loading your cases...</div>;
+    return (
+      <div className="text-center mt-5">
+        <Spinner animation="border" /> <p>Loading your cases...</p>
+      </div>
+    );
 
   return (
     <div className="container py-5">
+      {/* Header Section */}
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-4">
-        <h3 className="fw-bold text-primary mb-3 mb-md-0">📂 My Cases</h3>
+        <h3 className="fw-bold text-primary mb-3 mb-md-0">⚖️ My Cases</h3>
         <button
-          className="btn btn-success rounded-pill"
+          className="btn btn-gradient rounded-pill px-4 py-2"
           onClick={() => navigate("/lawyer/add-case")}
         >
           ➕ Add New Case
         </button>
       </div>
 
-      {/* --- Filters --- */}
+      {/* Filters */}
       <div className="card shadow-sm border-0 mb-4 rounded-4 p-3">
         <div className="row g-3 align-items-center">
           <div className="col-md-6 col-12">
@@ -73,43 +79,54 @@ export default function MyCases({ lawyerId }) {
         </div>
       </div>
 
-      {/* --- Cases List --- */}
+      {/* Cases List */}
       <div className="row g-4">
         {filtered.length > 0 ? (
           filtered.map((caseItem) => (
             <div key={caseItem.id} className="col-lg-4 col-md-6 col-12">
-              <div className="card h-100 border-0 shadow-sm rounded-4 lawyer-card">
+              <div className="card h-100 border-0 shadow-lg rounded-4 lawyer-card hover-scale">
                 <div className="card-body">
-                  <h5 className="fw-semibold text-dark">
-                    {caseItem.title || "Untitled Case"}
-                  </h5>
-                  <p className="small text-muted mb-1">
-                    <strong>Client:</strong> {caseItem.clientName || "N/A"}
-                  </p>
-                  <p className="text-secondary small mb-1">
-                    <strong>Category:</strong> {caseItem.category || "General"}
-                  </p>
-                  <p className="small mb-2">
-                    <strong>Status:</strong>{" "}
-                    <span
-                      className={`badge ${
+                  <div className="d-flex justify-content-between align-items-start">
+                    <h5 className="fw-semibold text-dark mb-1">
+                      {caseItem.title || "Untitled Case"}
+                    </h5>
+                    <Badge
+                      bg={
                         caseItem.status === "Closed"
-                          ? "bg-secondary"
+                          ? "secondary"
                           : caseItem.status === "In Progress"
-                          ? "bg-warning text-dark"
-                          : "bg-success"
-                      }`}
+                          ? "warning"
+                          : "success"
+                      }
+                      text={
+                        caseItem.status === "In Progress"
+                          ? "dark"
+                          : "light"
+                      }
                     >
                       {caseItem.status}
-                    </span>
+                    </Badge>
+                  </div>
+
+                  <p className="small text-muted mb-1">
+                    <strong>Case ID:</strong> {caseItem.id}
                   </p>
-                  <p className="text-muted small mb-3">
+                  <p className="small text-muted mb-1">
+                    <strong>Category:</strong> {caseItem.category || "General"}
+                  </p>
+                  <p className="small text-muted mb-1">
+                    <strong>Client:</strong> {caseItem.clientName || "Not linked yet"}
+                  </p>
+                  <p className="small text-muted mb-1">
+                    <strong>Advocate Number:</strong> {caseItem.advocateNumber}
+                  </p>
+                  <p className="text-muted small mt-2">
                     {caseItem.description?.length > 100
                       ? caseItem.description.slice(0, 100) + "..."
-                      : caseItem.description || "No description"}
+                      : caseItem.description || "No description available."}
                   </p>
 
-                  <div className="d-flex justify-content-between">
+                  <div className="d-flex justify-content-between mt-3">
                     <button
                       className="btn btn-outline-primary btn-sm rounded-pill"
                       onClick={() => navigate(`/case/${caseItem.id}`)}
@@ -120,13 +137,13 @@ export default function MyCases({ lawyerId }) {
                       className="btn btn-outline-success btn-sm rounded-pill"
                       onClick={() => navigate(`/lawyer/edit-case/${caseItem.id}`)}
                     >
-                      ✏️ Update
+                      ✏️ Edit
                     </button>
                   </div>
                 </div>
                 <div className="card-footer bg-light border-0 text-center">
                   <small className="text-muted">
-                    Created:{" "}
+                    📅 Created:{" "}
                     {caseItem.createdAt
                       ? new Date(caseItem.createdAt.seconds * 1000).toLocaleDateString()
                       : "N/A"}
@@ -139,6 +156,27 @@ export default function MyCases({ lawyerId }) {
           <p className="text-center text-muted">No cases found.</p>
         )}
       </div>
+
+      {/* Extra Styles */}
+      <style>{`
+        .btn-gradient {
+          background: linear-gradient(90deg, #007bff, #00bfff);
+          color: white;
+          font-weight: 500;
+          border: none;
+          transition: 0.3s;
+        }
+        .btn-gradient:hover {
+          background: linear-gradient(90deg, #0056b3, #0099cc);
+        }
+        .hover-scale {
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .hover-scale:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
     </div>
   );
 }

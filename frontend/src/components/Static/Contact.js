@@ -29,13 +29,13 @@ export default function Contact() {
 
               <ul className="list-unstyled">
                 <li className="mb-3">
-                  <strong>Email:</strong> support@lawyerlink.example
+                  <strong>Email:</strong> govindkushwahabusiness@gmail.com
                 </li>
                 <li className="mb-3">
-                  <strong>Phone:</strong> +91 98765 43210
+                  <strong>Phone:</strong> +91 6263859670
                 </li>
                 <li className="mb-3">
-                  <strong>Address:</strong> 42 Legal Street, New Delhi, India
+                  <strong>Address:</strong> Sagar, Madhya Pradesh, India
                 </li>
               </ul>
 

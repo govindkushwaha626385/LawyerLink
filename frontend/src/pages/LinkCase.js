@@ -3,22 +3,25 @@ import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebase";
-import { Alert, Button, Form } from "react-bootstrap";
+import { Alert, Button, Form, Card, Spinner } from "react-bootstrap";
 
 export default function LinkCase() {
   const [user] = useAuthState(auth);
   const [caseId, setCaseId] = useState("");
-  const [lawyerId, setLawyerId] = useState("");
-  const [message, setMessage] = useState(""); 
+  const [advocateNumber, setAdvocateNumber] = useState("");
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAddCase = async (e) => {
     e.preventDefault();
     setMessage("");
     setError("");
+    setLoading(true);
 
     if (!user) {
       setError("You must be logged in to add a case.");
+      setLoading(false);
       return;
     }
 
@@ -27,64 +30,88 @@ export default function LinkCase() {
       const caseSnap = await getDoc(caseRef);
 
       if (!caseSnap.exists()) {
-        setError("No case found with this Case ID.");
+        setError("❌ No case found with this Case ID.");
+        setLoading(false);
         return;
       }
 
       const caseData = caseSnap.data();
 
-      if (caseData.lawyerId !== lawyerId) {
-        setError("Lawyer ID does not match this case.");
+      // Match using advocateNumber instead of lawyerId
+      if (caseData.advocateNumber !== advocateNumber) {
+        setError("⚠️ Advocate Number does not match this case.");
+        setLoading(false);
         return;
       }
 
-      // Update case with litigant (client) info
+      // Update the case with litigant details
       await updateDoc(caseRef, {
         clientEmail: user.email,
         clientName: user.displayName || "Client",
       });
 
-      setMessage("Case successfully added to your dashboard!");
+      setMessage("✅ Case successfully linked to your dashboard!");
       setCaseId("");
-      setLawyerId("");
+      setAdvocateNumber("");
     } catch (err) {
       setError("Error adding case: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "500px" }}>
-      <h3 className="text-center mb-4">Add Case by Case ID</h3>
-      {error && <Alert variant="danger">{error}</Alert>}
-      {message && <Alert variant="success">{message}</Alert>}
+    <div className="container mt-5 d-flex justify-content-center">
+      <Card className="shadow-lg p-4" style={{ maxWidth: "500px", width: "100%" }}>
+        <h3 className="text-center mb-3 fw-bold text-primary">
+          Link Your Case
+        </h3>
+        <p className="text-center text-muted mb-4">
+          Enter your Case ID and Advocate Number to link your case.
+        </p>
 
-      <Form onSubmit={handleAddCase}>
-        <Form.Group className="mb-3">
-          <Form.Label>Case ID</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter Case ID"
-            value={caseId}
-            onChange={(e) => setCaseId(e.target.value)}
-            required
-          />
-        </Form.Group>
+        {error && <Alert variant="danger">{error}</Alert>}
+        {message && <Alert variant="success">{message}</Alert>}
 
-        <Form.Group className="mb-3">
-          <Form.Label>Lawyer ID</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter Lawyer ID"
-            value={lawyerId}
-            onChange={(e) => setLawyerId(e.target.value)}
-            required
-          />
-        </Form.Group>
+        <Form onSubmit={handleAddCase}>
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Case ID</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Enter your Case ID"
+              value={caseId}
+              onChange={(e) => setCaseId(e.target.value)}
+              required
+            />
+          </Form.Group>
 
-        <Button variant="primary" type="submit" className="w-100">
-          Add Case
-        </Button>
-      </Form>
+          <Form.Group className="mb-4">
+            <Form.Label className="fw-semibold">Advocate Number</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Enter Advocate Number"
+              value={advocateNumber}
+              onChange={(e) => setAdvocateNumber(e.target.value)}
+              required
+            />
+          </Form.Group>
+
+          <Button
+            variant="primary"
+            type="submit"
+            className="w-100 fw-semibold"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Spinner animation="border" size="sm" /> Linking...
+              </>
+            ) : (
+              "🔗 Link Case"
+            )}
+          </Button>
+        </Form>
+      </Card>
     </div>
   );
 }
