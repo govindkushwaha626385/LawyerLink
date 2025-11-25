@@ -234,11 +234,11 @@ export default function LitigantDashboard() {
                     🪪 Next Hearing Date: <span className="text-dark">{c.next_hearing_date}</span>
                   </div>
 
-                  <ProgressBar
-                    now={c.progress || 40}
-                    label={`${c.progress || 40}%`}
+                  {/* <ProgressBar
+                    now={c.status || 40}
+                    label={`${c.status || 40}%`}
                     className="rounded-pill"
-                  />
+                  /> */}
 
                   <div className="d-flex justify-content-between align-items-center mt-3">
                     <button
@@ -248,7 +248,7 @@ export default function LitigantDashboard() {
                       View Details
                     </button>
                     <span className="badge bg-success px-3 py-2 rounded-pill">
-                      {c.stage || "In Progress"}
+                      {c.status || "In Progress"}
                     </span>
                   </div>
                 </Card.Body>

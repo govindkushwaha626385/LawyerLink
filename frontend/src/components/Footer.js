@@ -19,7 +19,7 @@ export default function Footer() {
             <h6 className="fw-semibold text-dark">Quick Links</h6>
             <ul className="list-unstyled small">
               <li><a href="/" className="footer-link">Home</a></li>
-              <li><a href="/lawyers" className="footer-link">Find Lawyers</a></li>
+              <li><a href="/catalog" className="footer-link">Find Lawyers</a></li>
               <li><a href="/chatbot" className="footer-link">AI Chatbot</a></li>
               <li><a href="/about" className="footer-link">About Us</a></li>
             </ul>
@@ -38,7 +38,7 @@ export default function Footer() {
 
         <hr className="my-3" />
         <div className="text-center small text-muted">
-          © {new Date().getFullYear()} <strong>LawyerLink</strong> — Built with ❤️ by Govind Kushwaha
+          © {new Date().getFullYear()} <strong>LawyerLink</strong> — Built with ❤️ by Govind Singh Kushwaha
         </div>
       </div>
     </footer>

@@ -116,13 +116,13 @@ export default function LitigantCaseDetails() {
                         : "N/A"}
                 </p>
 
-                <div className="mt-4">
+                {/* <div className="mt-4">
                     <ProgressBar
                         now={caseData.progress || 40}
                         label={`${caseData.progress || 40}%`}
                         className="rounded-pill"
                     />
-                </div>
+                </div> */}
             </Card>
         </Container>
     );

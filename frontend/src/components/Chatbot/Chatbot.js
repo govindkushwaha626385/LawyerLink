@@ -24,7 +24,7 @@ export default function Chatbot() {
   }, [history]);
 
   return (
-    <div className="chatbot-wrapper d-flex align-items-center justify-content-center py-5 px-3">
+    <div className="chatbot-wrapper d-flex align-items-center justify-content-center py-3 px-2">
       <div className="chatbot-card shadow-lg">
         <div className="chatbot-header text-center p-3">
           <h4 className="fw-bold text-primary mb-1">💬 Legal AI Assistant</h4>

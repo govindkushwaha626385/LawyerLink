@@ -55,7 +55,7 @@ export default function LawyersCatalog() {
   return (
     <div className="container py-5 mt-4">
       <h2 className="text-center mb-4 fw-bold text-primary">
-        👩‍⚖️ Find the Right Lawyer for Your Case
+        ⚖️ Find the Right Lawyer for Your Case
       </h2>
 
       {/* --- Search & Filters --- */}
@@ -89,7 +89,7 @@ export default function LawyersCatalog() {
             <input
               type="text"
               className="form-control rounded-3"
-              placeholder="📍 Search by location..."
+              placeholder="📍 Search by location... (city)"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
