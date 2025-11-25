@@ -96,8 +96,7 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                {isLawyer && (
-                  <>
+                
                     <div className="col-md-6">
                       <label className="form-label">Phone Number</label>
                       <input
@@ -116,6 +115,8 @@ export default function ProfilePage() {
                         className="form-control"
                       />
                     </div>
+                    {isLawyer && (
+                  <>
                     <div className="col-md-6">
                       <label className="form-label">Experience (years)</label>
                       <input
@@ -164,10 +165,11 @@ export default function ProfilePage() {
             <>
               <div className="mt-3 text-start mx-auto" style={{ maxWidth: 500 }}>
                 <p><strong>Email:</strong> {userData.email}</p>
-                {isLawyer && (
-                  <>
+                
                     <p><strong>Phone:</strong> {userData.phone || "N/A"}</p>
                     <p><strong>Address:</strong> {userData.address || "N/A"}</p>
+                    {isLawyer && (
+                  <>
                     <p><strong>Experience:</strong> {userData.experience || "N/A"} yrs</p>
                     <p><strong>Category:</strong> {userData.category || "N/A"}</p>
                     <p><strong>Advocate Number:</strong> {userData.advocateNumber || "N/A"}</p>
