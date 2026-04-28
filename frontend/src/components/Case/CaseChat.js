@@ -1,8 +1,8 @@
 // src/components/Case/CaseChat.js
 import React, { useEffect, useState, useRef } from "react";
 import {
-  collection, addDoc, query, orderBy, onSnapshot,
-  serverTimestamp, doc, getDoc, where
+  collection, addDoc, query, onSnapshot,
+  serverTimestamp, doc, getDoc
 } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";

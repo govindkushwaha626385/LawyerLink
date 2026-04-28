@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   collection, getDocs, doc, updateDoc, deleteDoc,
-  query, where, orderBy, getDoc
+  query, where
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -72,11 +72,7 @@ export default function AdminPanel() {
     showToast(current ? "✅ Verification revoked" : "✅ Lawyer verified successfully");
   };
 
-  const updateCaseStatus = async (caseId, newStatus) => {
-    await updateDoc(doc(db, "cases", caseId), { status: newStatus });
-    setCases(prev => prev.map(c => c.id === caseId ? { ...c, status: newStatus } : c));
-    showToast(`✅ Case status updated to "${newStatus}"`);
-  };
+  // updateCaseStatus removed (Change Status column was removed from UI)
 
   const deleteReview = async (reviewId) => {
     if (!window.confirm("Delete this review permanently?")) return;
@@ -162,7 +158,7 @@ export default function AdminPanel() {
     </div>
   );
 
-  const starBar = (rating) => "⭐".repeat(Math.round(rating || 0)) || "—";
+
 
   return (
     <>

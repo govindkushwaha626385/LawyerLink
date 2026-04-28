@@ -1,5 +1,5 @@
 // src/utils/caseEvents.js
-import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../firebase";
 
 /**

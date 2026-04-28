@@ -30,6 +30,7 @@ const getDownloadUrl = (url = "", type = "") => {
 
 export default function CaseDocuments({ caseId, isLawyer }) {
   const [documents, setDocuments]   = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [caseInfo, setCaseInfo]     = useState(null);
   const [uploading, setUploading]   = useState(false);
   const [progress, setProgress]     = useState(0);
