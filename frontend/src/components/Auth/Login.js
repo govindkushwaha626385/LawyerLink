@@ -34,7 +34,6 @@ export default function Login() {
     }
   };
 
-  const isLawyer = role === "lawyer";
   const isAdmin  = role === "admin";
 
   // Role display config
