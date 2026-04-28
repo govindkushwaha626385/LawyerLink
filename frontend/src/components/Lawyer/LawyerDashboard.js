@@ -1,28 +1,20 @@
-// src/components/Lawyer/LawyerDashboard.js
 import React, { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  doc,
-  getDoc,
-} from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 import AddCaseModal from "./AddCaseModal";
-import { Card, Button, Container, Row, Col, Badge } from "react-bootstrap";
+import AnalyticsSection from "./AnalyticsSection";
+
 
 export default function LawyerDashboard() {
   const [cases, setCases] = useState([]);
   const [clients, setClients] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [advocateNumber, setAdvocateNumber] = useState("");
+  const [lawyerName, setLawyerName] = useState("");
   const navigate = useNavigate();
-
   const user = auth.currentUser;
 
-  // ✅ Fetch advocateNumber from "users" collection
   useEffect(() => {
     const fetchAdvocateNumber = async () => {
       if (!user) return;
@@ -30,174 +22,280 @@ export default function LawyerDashboard() {
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
         setAdvocateNumber(userSnap.data().advocateNumber || "");
+        setLawyerName(userSnap.data().fullName || "Lawyer");
       }
     };
     fetchAdvocateNumber();
   }, [user]);
 
-  // ✅ Fetch lawyer’s cases
   useEffect(() => {
     if (!user) return;
-
     const fetchData = async () => {
       const q = query(collection(db, "cases"), where("lawyerId", "==", user.uid));
       const snapshot = await getDocs(q);
-      const caseList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const caseList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setCases(caseList);
-
-      // Get unique clients
-      const uniqueClients = [
-        ...new Map(caseList.map((item) => [item.clientEmail, item])).values(),
-      ];
+      const uniqueClients = [...new Map(caseList.map((item) => [item.clientEmail, item])).values()];
       setClients(uniqueClients);
     };
-
     fetchData();
   }, [user]);
 
+  const statusColor = (status) => {
+    if (status === "Closed") return { bar: "#dc2626", bg: "#fee2e2", text: "#991b1b" };
+    if (status === "In Progress") return { bar: "#d97706", bg: "#fef3c7", text: "#92400e" };
+    return { bar: "#16a34a", bg: "#d1fae5", text: "#065f46" };
+  };
+
+  const openCount = cases.filter(c => c.status !== "Closed").length;
+  const closedCount = cases.filter(c => c.status === "Closed").length;
+
   return (
-    <Container fluid className="py-4 bg-light min-vh-100">
-      {/* 🧑‍⚖️ Header */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-primary mb-3 mb-md-0">
-          ⚖️ Lawyer Dashboard
-        </h2>
-        <Button
-          variant="success"
-          className="rounded-pill px-4 fw-semibold"
-          onClick={() => setShowModal(true)}
-        >
-          ➕ Add New Case
-        </Button>
-      </div>
+    <>
+      <style>{`
+        .ld-wrapper {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fc 50%, #fdf8ee 100%);
+          padding: 32px 20px 60px;
+          font-family: 'Inter', sans-serif;
+        }
+        .ld-header {
+          display: flex; flex-wrap: wrap;
+          justify-content: space-between; align-items: center;
+          margin-bottom: 32px; gap: 16px;
+        }
+        .ld-greeting { font-family: 'Playfair Display', serif; font-size: 1.85rem; font-weight: 700; color: #1a2744; margin: 0; }
+        .ld-greeting span { color: #c9a84c; }
+        .ld-greeting-sub { font-size: 0.875rem; color: #6b7280; margin-top: 4px; }
+        .ld-add-btn {
+          background: linear-gradient(135deg, #1a2744, #243460);
+          color: white; border: none; border-radius: 50px;
+          padding: 11px 26px; font-size: 0.9rem; font-weight: 700;
+          cursor: pointer; transition: all 0.25s ease;
+          display: flex; align-items: center; gap: 8px;
+          box-shadow: 0 4px 16px rgba(26,39,68,0.25);
+        }
+        .ld-add-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,39,68,0.35); }
 
-      {/* 📂 My Cases */}
-      <Card className="border-0 shadow-sm rounded-4 mb-5">
-        <Card.Body>
-          <h4 className="fw-semibold text-dark mb-4">📁 My Cases</h4>
+        /* Stats */
+        .ld-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 36px; }
+        .ld-stat-card {
+          background: white; border-radius: 16px; padding: 20px 22px;
+          box-shadow: 0 2px 12px rgba(26,39,68,0.06); border: 1px solid rgba(26,39,68,0.04);
+          transition: all 0.25s ease;
+        }
+        .ld-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(26,39,68,0.1); }
+        .ld-stat-num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #1a2744; margin: 0; }
+        .ld-stat-label { font-size: 0.78rem; color: #6b7280; margin-top: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ld-stat-icon { font-size: 1.4rem; margin-bottom: 8px; }
 
-          {cases.length > 0 ? (
-            <Row className="g-4">
-              {cases.map((c) => (
-                <Col key={c.id} md={4} sm={6} xs={12}>
-                  <Card
-                    className="shadow-sm border-0 rounded-4 h-100 lawyer-card"
-                    onClick={() => navigate(`/case/${c.id}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <Card.Body>
-                      <Card.Title className="fw-bold text-dark">
-                        {c.title}
-                      </Card.Title>
-                      <Card.Text className="text-muted mb-1">
-                        👤 {c.clientName}
-                      </Card.Text>
-                      <Card.Text className="small text-secondary mb-2">
-                        📅 {c.date || "N/A"}
-                      </Card.Text>
-                      <Badge
-                        bg={
-                          c.status === "Closed"
-                            ? "danger"
-                            : c.status === "In Progress"
-                              ? "warning"
-                              : "info"
-                        }
-                        className="rounded-pill px-3 py-2"
-                      >
-                        {c.status}
-                      </Badge>
-                      <div className="mt-2 small text-muted">
-                        🧾 Case ID: <strong>{c.case_id}</strong>
-                      </div>
-                      <div className="small text-muted">
-                        🪪 Advocate No: <strong>{c.advocateNumber}</strong>
-                      </div>
-                      <div
-                        className="p-3 rounded-3 shadow-sm mt-2"
-                        style={{
-                          backgroundColor: "#e8f0fe",
-                          fontWeight: "700",
-                          color: "#0d47a1",
-                          borderLeft: "5px solid #0d47a1",
-                        }}
-                      >
-                        🪪 Next Hearing Date: <span className="text-dark">{c.next_hearing_date}</span>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : (
-            <p className="text-center text-muted mt-3">
-              No cases yet. Add one to get started.
-            </p>
-          )}
-        </Card.Body>
-      </Card>
+        /* Section headers */
+        .ld-section-header {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 20px;
+        }
+        .ld-section-title {
+          font-family: 'Playfair Display', serif; font-size: 1.3rem;
+          font-weight: 700; color: #1a2744; margin: 0;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .ld-section-count {
+          background: #eef2ff; color: #4338ca; border-radius: 50px;
+          padding: 2px 12px; font-size: 0.78rem; font-weight: 700;
+        }
 
-      {/* 👥 Clients */}
-      <Card className="border-0 shadow-sm rounded-4">
-        <Card.Body>
-          <h4 className="fw-semibold text-dark mb-4">👥 My Clients</h4>
-          {clients.length > 0 ? (
-            <Row className="g-4">
-              {clients.map((client, i) => (
-                <Col key={i} md={4} sm={6} xs={12}>
-                  <Card className="border-0 shadow-sm rounded-4 h-100 p-3">
-                    <h6 className="fw-bold mb-1">{client.clientName}</h6>
-                    <p className="text-muted small mb-2">{client.clientEmail}</p>
-                    <div className="d-flex flex-wrap gap-2">
-                      <a
-                        href={`mailto:${client.clientEmail}`}
-                        className="btn btn-outline-success btn-sm rounded-pill fw-semibold"
-                      >
-                        ✉️ Email
-                      </a>
+        /* Case cards */
+        .ld-case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 20px; }
+        .ld-case-card {
+          background: white; border-radius: 18px; overflow: hidden;
+          box-shadow: 0 2px 12px rgba(26,39,68,0.06); border: 1px solid rgba(26,39,68,0.04);
+          cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+          position: relative;
+        }
+        .ld-case-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(26,39,68,0.14); }
+        .ld-case-card-bar { height: 4px; width: 100%; }
+        .ld-case-card-body { padding: 20px; }
+        .ld-case-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; color: #1a2744; margin-bottom: 8px; }
+        .ld-case-meta { font-size: 0.8rem; color: #6b7280; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .ld-status-badge {
+          display: inline-flex; align-items: center; gap: 5px;
+          border-radius: 50px; padding: 3px 12px;
+          font-size: 0.73rem; font-weight: 700; letter-spacing: 0.2px;
+        }
+        .ld-hearing-box {
+          background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+          border-left: 3px solid #1a2744; border-radius: 8px;
+          padding: 10px 14px; margin-top: 12px;
+          font-size: 0.82rem; font-weight: 600; color: #1a2744;
+        }
+
+        /* Client cards */
+        .ld-client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; }
+        .ld-client-card {
+          background: white; border-radius: 16px; padding: 18px 20px;
+          box-shadow: 0 2px 10px rgba(26,39,68,0.06); border: 1px solid rgba(26,39,68,0.04);
+          transition: all 0.25s ease;
+        }
+        .ld-client-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(26,39,68,0.1); }
+        .ld-client-avatar {
+          width: 44px; height: 44px; border-radius: 50%;
+          background: linear-gradient(135deg, #eef2ff, #c7d2fe);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.1rem; margin-bottom: 10px;
+          border: 2px solid #e0e7ff;
+        }
+        .ld-client-name { font-weight: 700; color: #1a2744; font-size: 0.95rem; margin-bottom: 2px; }
+        .ld-client-email { font-size: 0.78rem; color: #6b7280; margin-bottom: 12px; }
+        .ld-contact-btn {
+          display: inline-flex; align-items: center; gap: 5px;
+          border-radius: 50px; padding: 5px 14px; font-size: 0.78rem;
+          font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+          text-decoration: none; margin-right: 8px; border: 1.5px solid;
+        }
+        .ld-contact-btn-email { color: #16a34a; border-color: #16a34a; background: transparent; }
+        .ld-contact-btn-email:hover { background: #16a34a; color: white; }
+        .ld-contact-btn-call { color: #1a2744; border-color: #1a2744; background: transparent; }
+        .ld-contact-btn-call:hover { background: #1a2744; color: white; }
+
+        /* Empty state */
+        .ld-empty { text-align: center; padding: 48px 20px; color: #9ca3af; }
+        .ld-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+        .ld-empty p { font-size: 0.95rem; margin: 0; }
+
+        /* Section card */
+        .ld-section { background: white; border-radius: 20px; padding: 28px; margin-bottom: 28px; box-shadow: 0 2px 16px rgba(26,39,68,0.06); border: 1px solid rgba(26,39,68,0.04); }
+
+        @media (max-width: 600px) {
+          .ld-greeting { font-size: 1.4rem; }
+          .ld-stats { grid-template-columns: 1fr 1fr; }
+        }
+      `}</style>
+
+      <div className="ld-wrapper">
+        <div className="container-lg">
+          {/* ── Header ── */}
+          <div className="ld-header">
+            <div>
+              <h2 className="ld-greeting">⚖️ Welcome back, <span>{lawyerName.split(" ")[0]}</span></h2>
+              <p className="ld-greeting-sub">Manage your cases and clients from your dashboard.</p>
+            </div>
+            <button className="ld-add-btn" onClick={() => setShowModal(true)}>
+              ＋ Add New Case
+            </button>
+          </div>
+
+          {/* ── Stats ── */}
+          <div className="ld-stats">
+            <div className="ld-stat-card">
+              <div className="ld-stat-icon">📁</div>
+              <p className="ld-stat-num">{cases.length}</p>
+              <p className="ld-stat-label">Total Cases</p>
+            </div>
+            <div className="ld-stat-card">
+              <div className="ld-stat-icon">⚡</div>
+              <p className="ld-stat-num">{openCount}</p>
+              <p className="ld-stat-label">Active Cases</p>
+            </div>
+            <div className="ld-stat-card">
+              <div className="ld-stat-icon">✅</div>
+              <p className="ld-stat-num">{closedCount}</p>
+              <p className="ld-stat-label">Closed Cases</p>
+            </div>
+            <div className="ld-stat-card">
+              <div className="ld-stat-icon">👥</div>
+              <p className="ld-stat-num">{clients.length}</p>
+              <p className="ld-stat-label">Total Clients</p>
+            </div>
+          </div>
+
+          {/* ── Cases ── */}
+          <div className="ld-section">
+            <div className="ld-section-header">
+              <h3 className="ld-section-title">
+                📁 My Cases
+                <span className="ld-section-count">{cases.length}</span>
+              </h3>
+            </div>
+
+            {cases.length === 0 ? (
+              <div className="ld-empty">
+                <div className="ld-empty-icon">📂</div>
+                <p>No cases yet. Click "Add New Case" to get started.</p>
+              </div>
+            ) : (
+              <div className="ld-case-grid">
+                {cases.map((c) => {
+                  const col = statusColor(c.status);
+                  return (
+                    <div key={c.id} className="ld-case-card" onClick={() => navigate(`/case/${c.id}`)}>
+                      <div className="ld-case-card-bar" style={{ background: col.bar }} />
+                      <div className="ld-case-card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <h4 className="ld-case-title">{c.title}</h4>
+                          <span className="ld-status-badge" style={{ background: col.bg, color: col.text }}>
+                            {c.status}
+                          </span>
+                        </div>
+                        <p className="ld-case-meta">👤 {c.clientName}</p>
+                        <p className="ld-case-meta">🏷️ {c.category || "General"}</p>
+                        <p className="ld-case-meta">🧾 Case ID: <strong>{c.case_id}</strong></p>
+                        <p className="ld-case-meta">🪪 Advocate No: <strong>{c.advocateNumber}</strong></p>
+                        <div className="ld-hearing-box">
+                          📅 Next Hearing: <strong>{c.next_hearing_date || "Not set"}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ── Clients ── */}
+          <div className="ld-section">
+            <div className="ld-section-header">
+              <h3 className="ld-section-title">
+                👥 My Clients
+                <span className="ld-section-count">{clients.length}</span>
+              </h3>
+            </div>
+
+            {clients.length === 0 ? (
+              <div className="ld-empty">
+                <div className="ld-empty-icon">👤</div>
+                <p>No clients linked yet.</p>
+              </div>
+            ) : (
+              <div className="ld-client-grid">
+                {clients.map((client, i) => (
+                  <div key={i} className="ld-client-card">
+                    <div className="ld-client-avatar">👤</div>
+                    <p className="ld-client-name">{client.clientName}</p>
+                    <p className="ld-client-email">{client.clientEmail}</p>
+                    <div>
+                      <a href={`mailto:${client.clientEmail}`} className="ld-contact-btn ld-contact-btn-email">✉️ Email</a>
                       {client.clientPhone && (
-                        <a
-                          href={`tel:${client.clientPhone}`}
-                          className="btn btn-outline-primary btn-sm rounded-pill fw-semibold"
-                        >
-                          📞 Call
-                        </a>
+                        <a href={`tel:${client.clientPhone}`} className="ld-contact-btn ld-contact-btn-call">📞 Call</a>
                       )}
                     </div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : (
-            <p className="text-center text-muted">No clients found yet.</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Analytics ── */}
+          {cases.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <AnalyticsSection cases={cases} />
+            </div>
           )}
-        </Card.Body>
-      </Card>
+        </div>
+      </div>
 
-      {/* ➕ Add Case Modal */}
       {showModal && (
-        <AddCaseModal
-          advocateNumber={advocateNumber}
-          onClose={() => setShowModal(false)}
-        />
+        <AddCaseModal advocateNumber={advocateNumber} onClose={() => setShowModal(false)} />
       )}
-
-      {/* 💅 Hover Animations */}
-      <style>
-        {`
-          .lawyer-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: #fff;
-          }
-          .lawyer-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
-          }
-        `}
-      </style>
-    </Container>
+    </>
   );
 }

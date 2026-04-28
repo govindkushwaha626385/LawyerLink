@@ -20,4 +20,12 @@
 
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
+# Secrets & credentials
+serviceAccountKey.json
+.env
+.env.*
+
+# Python virtual environment
+my_stable_env/
+__pycache__/
+*.pyc

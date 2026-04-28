@@ -4,10 +4,15 @@ import {
   addDoc,
   serverTimestamp,
   getDoc,
+  getDocs,
+  query,
+  where,
   doc,
 } from "firebase/firestore";
 import { db, auth } from "../../firebase";
-import { v4 as uuidv4 } from "uuid"; // npm install uuid
+import { v4 as uuidv4 } from "uuid";
+import { addCaseEvent } from "../../utils/caseEvents";
+import { createNotification } from "../../utils/notifications";
 
 export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumber }) {
   const [caseData, setCaseData] = useState({
@@ -46,28 +51,56 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return alert("Please log in first!");
-
     try {
       setLoading(true);
-
-      // ✅ Generate unique case_id
       const generatedCaseId = uuidv4().slice(0, 8).toUpperCase();
 
-      // ✅ Save case in Firestore
-      await addDoc(collection(db, "cases"), {
+      // Fetch lawyer's name for notifications
+      const lawyerSnap = await getDoc(doc(db, "users", user.uid));
+      const lawyerName = lawyerSnap.exists() ? lawyerSnap.data().fullName || user.email : user.email;
+
+      // Fetch litigantId first (so it can be stored in the case doc)
+      const normalizedClientEmail = caseData.clientEmail.trim().toLowerCase();
+      const usersQ = query(collection(db, "users"), where("email", "==", normalizedClientEmail));
+      const usersSnap = await getDocs(usersQ);
+      const litigantId = usersSnap.empty ? null : usersSnap.docs[0].id;
+
+      // Save case in Firestore (single addDoc with all fields including litigantId)
+      const newCaseRef = await addDoc(collection(db, "cases"), {
         ...caseData,
+        clientEmail: normalizedClientEmail,
         case_id: generatedCaseId,
         advocateNumber,
         lawyerId: user.uid,
         lawyerEmail: user.email,
+        lawyerName,
+        litigantId: litigantId || null,
+        status: caseData.status || "Open",
         createdAt: serverTimestamp(),
         date: new Date().toLocaleDateString(),
+        events: [],
+        hearingNotes: [],
+        documents: [],
       });
 
-      // setCaseId(generatedCaseId);
+      // Timeline event: case created
+      await addCaseEvent(newCaseRef.id, "created",
+        `📁 Case "${caseData.title}" created by ${lawyerName}`, lawyerName);
+
+      // Notify litigant if they have an account
+      if (litigantId) {
+        await createNotification(
+          litigantId,
+          "New Case Added",
+          `Lawyer ${lawyerName} added case "${caseData.title}" to your account.`,
+          "case_update",
+          newCaseRef.id
+        );
+      }
+
       alert(`✅ Case added successfully!\nCase ID: ${generatedCaseId}`);
       onClose();
-      window.location.reload(); // refresh dashboard to show new case
+      window.location.reload();
     } catch (error) {
       console.error("❌ Error adding case:", error);
       alert("Failed to add case. Please try again.");

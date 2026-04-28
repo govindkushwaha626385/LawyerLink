@@ -1,21 +1,340 @@
+/* ============================================================
+   LawyerLink — Global Design System
+   Font: Playfair Display (headings) + Inter (body)
+   Palette: Deep Navy #1a2744 | Gold #c9a84c | Surface #f8f9fc
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ---------- CSS Custom Properties ---------- */
+:root {
+  --navy:       #1a2744;
+  --navy-dark:  #111b33;
+  --navy-mid:   #243460;
+  --gold:       #c9a84c;
+  --gold-light: #e8c96d;
+  --surface:    #f8f9fc;
+  --white:      #ffffff;
+  --muted:      #6b7280;
+  --danger:     #dc2626;
+  --success:    #16a34a;
+  --warning:    #d97706;
+  --info:       #0284c7;
+  --radius-sm:  8px;
+  --radius-md:  16px;
+  --radius-lg:  24px;
+  --radius-pill:50px;
+  --shadow-sm:  0 2px 8px rgba(26,39,68,0.08);
+  --shadow-md:  0 8px 24px rgba(26,39,68,0.12);
+  --shadow-lg:  0 16px 48px rgba(26,39,68,0.18);
+  --shadow-glow:0 4px 20px rgba(201,168,76,0.35);
+  --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #1f2937;
+  background: var(--surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--navy);
 }
 
+a { color: var(--navy); text-decoration: none; transition: var(--transition); }
+a:hover { color: var(--gold); }
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ---------- Custom Scrollbar ---------- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--navy-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--navy); }
+
+/* ---------- Animated Gradient Backgrounds ---------- */
+.bg-gradient-navy {
+  background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 50%, #1e3a6e 100%);
+}
+
+.bg-gradient-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+}
+
+.bg-gradient-surface {
+  background: linear-gradient(135deg, #eef2ff 0%, #f8f9fc 50%, #fdf8ee 100%);
+}
+
+.bg-animated-gradient {
+  background: linear-gradient(-45deg, #0f1d3a, #1a2744, #243460, #1a3a5c);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ---------- Glassmorphism ---------- */
+.glass {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.glass-dark {
+  background: rgba(26,39,68,0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ---------- Premium Cards ---------- */
+.card-premium {
+  background: var(--white);
+  border: 1px solid rgba(26,39,68,0.06);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.card-premium:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.card-premium-hover:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-6px);
+}
+
+/* ---------- Buttons ---------- */
+.btn-navy {
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 10px 28px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-navy:hover {
+  background: var(--navy-dark);
+  color: var(--white);
+  box-shadow: 0 4px 16px rgba(26,39,68,0.3);
+  transform: translateY(-1px);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--navy-dark);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 10px 28px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-gold:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+  color: var(--navy-dark);
+}
+
+.btn-outline-navy {
+  background: transparent;
+  color: var(--navy);
+  border: 2px solid var(--navy);
+  border-radius: var(--radius-pill);
+  padding: 8px 24px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.btn-outline-navy:hover {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.btn-outline-gold {
+  background: transparent;
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-pill);
+  padding: 8px 24px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.btn-outline-gold:hover {
+  background: var(--gold);
+  color: var(--navy-dark);
+}
+
+/* ---------- Status Badges ---------- */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.3px;
+}
+.badge-open     { background: #d1fae5; color: #065f46; }
+.badge-progress { background: #fef3c7; color: #92400e; }
+.badge-closed   { background: #fee2e2; color: #991b1b; }
+
+/* ---------- Form Inputs ---------- */
+.input-premium {
+  border: 1.5px solid #e5e7eb;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  transition: var(--transition);
+  width: 100%;
+  background: var(--white);
+  outline: none;
+}
+.input-premium:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(26,39,68,0.08);
+}
+.input-premium::placeholder { color: #9ca3af; }
+
+/* ---------- Section Dividers ---------- */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+}
+.section-divider span {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- Page Entry Animation ---------- */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: fadeSlideUp 0.5s ease both;
+}
+.animate-in-delay-1 { animation: fadeSlideUp 0.5s 0.1s ease both; }
+.animate-in-delay-2 { animation: fadeSlideUp 0.5s 0.2s ease both; }
+.animate-in-delay-3 { animation: fadeSlideUp 0.5s 0.3s ease both; }
+
+/* ---------- Gold Accent Headings ---------- */
+.heading-gold-accent {
+  position: relative;
+  display: inline-block;
+}
+.heading-gold-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 48px;
+  height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+
+/* ---------- Hearing Date Callout ---------- */
+.hearing-callout {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  border-left: 4px solid var(--navy);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.9rem;
+}
+
+/* ---------- Lawyer Card Hover ---------- */
 .lawyer-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: var(--transition);
 }
 .lawyer-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* ---------- Floating Orbs (Hero Background) ---------- */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: orbFloat 6s ease-in-out infinite;
+}
+.orb-1 { width: 400px; height: 400px; background: var(--gold); top: -100px; right: -100px; animation-delay: 0s; }
+.orb-2 { width: 300px; height: 300px; background: #3b82f6; bottom: -80px; left: -80px; animation-delay: 2s; }
+.orb-3 { width: 200px; height: 200px; background: var(--gold-light); top: 40%; left: 50%; animation-delay: 4s; }
+
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-30px) scale(1.05); }
+}
+
+/* ---------- Gold Line Separator ---------- */
+.gold-line {
+  height: 3px;
+  width: 60px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 2px;
+  margin: 12px auto 20px;
+}
+
+/* ---------- Responsive Helpers ---------- */
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
 }
