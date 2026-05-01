@@ -180,7 +180,6 @@ export default function CasePredictor() {
   const [loading, setLoading]     = useState(false);
   const [fetching, setFetching]   = useState(true);
   const [error, setError]         = useState("");
-  const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
     const fetchCase = async () => {
@@ -199,8 +198,6 @@ export default function CasePredictor() {
     try {
       const result = await analyzeCaseWithAI(buildPrompt(caseData));
       setAnalysis(result);
-      setAnimating(true);
-      setTimeout(() => setAnimating(false), 1200);
     } catch (e) {
       setError(`AI analysis failed: ${e.message}`);
     } finally {
