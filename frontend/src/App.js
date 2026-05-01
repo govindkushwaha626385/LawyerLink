@@ -32,6 +32,8 @@ import About from "./components/Static/About";
 import Contact from "./components/Static/Contact";
 import SmartMatch from "./pages/SmartMatch";
 import AdminPanel from "./pages/AdminPanel";
+import CasePredictor from "./pages/CasePredictor";
+import DocumentAnalyzer from "./pages/DocumentAnalyzer";
 
 // --- Scroll to Top Component ---
 function ScrollToTop() {
@@ -148,7 +150,16 @@ function AppLayout() {
 
           {/* --- New Feature Routes --- */}
           <Route path="/smart-match" element={<SmartMatch />} />
+          <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
           <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+          <Route
+            path="/case/:id/predict"
+            element={
+              <ProtectedRoute>
+                <CasePredictor />
+              </ProtectedRoute>
+            }
+          />
 
           {/* --- Fallback --- */}
           <Route path="*" element={<Navigate to="/" replace />} />

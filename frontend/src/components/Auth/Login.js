@@ -34,13 +34,13 @@ export default function Login() {
     }
   };
 
-  const isAdmin  = role === "admin";
+  const isAdmin = role === "admin";
 
   // Role display config
   const roleConfig = {
-    lawyer:   { icon: "👨\u200d⚖️", label: "Lawyer Portal",        bg: "rgba(59,130,246,0.1)",    color: "#1d4ed8", border: "rgba(59,130,246,0.25)" },
-    litigant: { icon: "⚖️",        label: "Litigant Portal",      bg: "rgba(201,168,76,0.1)",   color: "#92400e", border: "rgba(201,168,76,0.3)"  },
-    admin:    { icon: "🛡️",        label: "Administrator Portal", bg: "rgba(220,38,38,0.08)",   color: "#991b1b", border: "rgba(220,38,38,0.2)"   },
+    lawyer: { icon: "👨\u200d⚖️", label: "Lawyer Portal", bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", border: "rgba(59,130,246,0.25)" },
+    litigant: { icon: "⚖️", label: "Litigant Portal", bg: "rgba(201,168,76,0.1)", color: "#92400e", border: "rgba(201,168,76,0.3)" },
+    admin: { icon: "🛡️", label: "Administrator Portal", bg: "rgba(220,38,38,0.08)", color: "#991b1b", border: "rgba(220,38,38,0.2)" },
   };
   const rc = roleConfig[role] || roleConfig.litigant;
 

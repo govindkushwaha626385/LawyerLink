@@ -98,6 +98,29 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
         );
       }
 
+      // Send case-added email to client
+      try {
+        const clientName = usersSnap.empty ? "" : (usersSnap.docs[0].data().fullName || "");
+        await fetch("http://127.0.0.1:8000/send-case-added-email/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            client_email:      normalizedClientEmail,
+            client_name:       clientName || caseData.clientName,
+            lawyer_name:       lawyerName,
+            lawyer_email:      user.email,
+            case_id:           generatedCaseId,
+            case_title:        caseData.title,
+            category:          caseData.category,
+            description:       caseData.description,
+            status:            caseData.status || "Open",
+            next_hearing_date: caseData.next_hearing_date,
+          }),
+        });
+      } catch (emailErr) {
+        console.warn("Email notification failed (non-critical):", emailErr);
+      }
+
       alert(`✅ Case added successfully!\nCase ID: ${generatedCaseId}`);
       onClose();
       window.location.reload();

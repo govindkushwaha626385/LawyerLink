@@ -230,7 +230,13 @@ export default function CaseDetails() {
                     <span className="cd-status-badge" style={{ background: col.bg, color: col.text }}>{caseData.status}</span>
                   )}
                   {isLawyerOwner && !isEditing && (
-                    <button className="cd-edit-btn" onClick={() => setIsEditing(true)}>✏️ Edit</button>
+                    <>
+                      <button className="cd-edit-btn" onClick={() => navigate(`/case/${id}/predict`)}
+                        style={{ background: "linear-gradient(135deg,#1a2744,#243460)", color: "white", border: "none" }}>
+                        🔮 AI Predict
+                      </button>
+                      <button className="cd-edit-btn" onClick={() => setIsEditing(true)}>✏️ Edit</button>
+                    </>
                   )}
                 </div>
               </div>

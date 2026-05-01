@@ -167,104 +167,413 @@ def match_lawyers(query: MatchQuery):
 
 
 # ─────────────────────────────────────────────
-# ✦ Hearing Date Email Reminders (APScheduler)
+# ✦ Email Notification System
 # ─────────────────────────────────────────────
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import date, timedelta
+import os
 
-# Email config — set these as environment variables in production
-EMAIL_SENDER = "govindkushwahabusiness@gmail.com"
-EMAIL_PASSWORD = "clbe pkra rxcb bzbn"   # Use Gmail App Password
+# Email config
+EMAIL_SENDER   = "govindkushwahabusiness@gmail.com"
+EMAIL_PASSWORD = "clbe pkra rxcb bzbn"  # Gmail App Password
 
-def send_reminder_email(to_email: str, case_title: str, hearing_date: str, role: str):
-    """Send a hearing reminder email to a lawyer or litigant."""
+
+def build_email_html(recipient_name: str, role: str, case_title: str,
+                     case_id: str, hearing_date: str, lawyer_name: str = "",
+                     opponent: str = "", court: str = ""):
+    """Build a premium HTML email template for hearing reminders."""
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+        <!-- ═══ Header ═══ -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1a2744 0%,#243460 100%);padding:32px 36px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:0.5px;">⚖️ LawyerLink</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:13px;letter-spacing:1px;text-transform:uppercase;">Hearing Reminder</p>
+          </td>
+        </tr>
+
+        <!-- ═══ Alert Banner ═══ -->
+        <tr>
+          <td style="background:linear-gradient(90deg,#c9a84c,#e8c96d);padding:12px 36px;text-align:center;">
+            <p style="margin:0;color:#1a2744;font-size:14px;font-weight:700;">📅 You have a hearing scheduled for TOMORROW</p>
+          </td>
+        </tr>
+
+        <!-- ═══ Body ═══ -->
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#1a2744;font-size:16px;margin:0 0 20px;line-height:1.6;">
+              Dear <strong>{recipient_name or role}</strong>,
+            </p>
+            <p style="color:#4b5563;font-size:14px;margin:0 0 24px;line-height:1.7;">
+              This is an automated reminder that you have a hearing scheduled for
+              <strong style="color:#1a2744;">tomorrow ({hearing_date})</strong>.
+              Please ensure you are prepared with all necessary documents and information.
+            </p>
+
+            <!-- Case Info Card -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faff;border:1px solid #e5e7eb;border-left:4px solid #c9a84c;border-radius:12px;margin:0 0 24px;">
+              <tr><td style="padding:20px 24px;">
+                <p style="margin:0 0 4px;color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Case Details</p>
+                <p style="margin:0 0 14px;color:#1a2744;font-size:18px;font-weight:700;">{case_title}</p>
+                <table cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;" width="130">📋 Case ID</td>
+                    <td style="padding:6px 0;color:#1a2744;font-size:13px;font-weight:600;">{case_id or '—'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;">📅 Hearing Date</td>
+                    <td style="padding:6px 0;color:#1a2744;font-size:13px;font-weight:600;">{hearing_date}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;">👤 Your Role</td>
+                    <td style="padding:6px 0;color:#1a2744;font-size:13px;font-weight:600;">{role}</td>
+                  </tr>
+                  {"<tr><td style='padding:6px 0;color:#6b7280;font-size:13px;'>👨‍⚖️ Lawyer</td><td style='padding:6px 0;color:#1a2744;font-size:13px;font-weight:600;'>" + lawyer_name + "</td></tr>" if lawyer_name else ""}
+                </table>
+              </td></tr>
+            </table>
+
+            <!-- Checklist -->
+            <p style="color:#1a2744;font-size:14px;font-weight:700;margin:0 0 10px;">📝 Pre-Hearing Checklist:</p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+              <tr><td style="padding:4px 0;color:#4b5563;font-size:13px;">✅ Review all case documents and evidence</td></tr>
+              <tr><td style="padding:4px 0;color:#4b5563;font-size:13px;">✅ Prepare any required submissions or affidavits</td></tr>
+              <tr><td style="padding:4px 0;color:#4b5563;font-size:13px;">✅ Confirm appointment with your lawyer</td></tr>
+              <tr><td style="padding:4px 0;color:#4b5563;font-size:13px;">✅ Carry valid ID proof and case reference number</td></tr>
+              <tr><td style="padding:4px 0;color:#4b5563;font-size:13px;">✅ Arrive at least 30 minutes early</td></tr>
+            </table>
+
+            <!-- CTA Button -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 16px;">
+                <a href="https://lawyer-link-frontend.vercel.app" style="display:inline-block;background:linear-gradient(135deg,#1a2744,#243460);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
+                  View Case on LawyerLink →
+                </a>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ═══ Footer ═══ -->
+        <tr>
+          <td style="background:#f8faff;border-top:1px solid #e5e7eb;padding:24px 36px;text-align:center;">
+            <p style="margin:0 0 6px;color:#9ca3af;font-size:12px;">This is an automated reminder from LawyerLink</p>
+            <p style="margin:0 0 6px;color:#9ca3af;font-size:11px;">⚖️ LawyerLink — Connecting Justice, Empowering Rights</p>
+            <p style="margin:0;color:#d1d5db;font-size:10px;">© {date.today().year} LawyerLink. All rights reserved.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+"""
+
+
+def send_reminder_email(to_email: str, case_title: str, hearing_date: str,
+                        role: str, case_id: str = "", recipient_name: str = "",
+                        lawyer_name: str = ""):
+    """Send a hearing reminder email."""
     try:
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"⚖️ Hearing Reminder: {case_title} — Tomorrow"
-        msg["From"] = f"LawyerLink <{EMAIL_SENDER}>"
-        msg["To"] = to_email
+        msg["Subject"] = f"⚖️ Hearing Tomorrow: {case_title} — {hearing_date}"
+        msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
+        msg["To"]      = to_email
 
-        html = f"""
-        <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;background:#f8faff;border-radius:20px;overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#1a2744,#243460);padding:30px 28px;text-align:center;">
-            <h1 style="color:white;font-size:1.4rem;margin:0;">⚖️ LawyerLink</h1>
-          </div>
-          <div style="padding:28px;">
-            <h2 style="color:#1a2744;font-size:1.1rem;">📅 Hearing Reminder</h2>
-            <p style="color:#374151;font-size:0.95rem;">Dear {role},</p>
-            <p style="color:#374151;">This is a reminder that you have a hearing <strong>tomorrow</strong> for the following case:</p>
-            <div style="background:white;border-left:4px solid #c9a84c;border-radius:10px;padding:16px 18px;margin:20px 0;">
-              <p style="color:#1a2744;font-weight:700;font-size:1rem;margin:0 0 6px;">{case_title}</p>
-              <p style="color:#6b7280;font-size:0.85rem;margin:0;">📅 Hearing Date: <strong>{hearing_date}</strong></p>
-            </div>
-            <p style="color:#6b7280;font-size:0.85rem;">Please be prepared and arrive on time.</p>
-            <p style="color:#9ca3af;font-size:0.75rem;margin-top:24px;">— LawyerLink Automated Reminder</p>
-          </div>
-        </div>
-        """
+        html = build_email_html(
+            recipient_name=recipient_name,
+            role=role,
+            case_title=case_title,
+            case_id=case_id,
+            hearing_date=hearing_date,
+            lawyer_name=lawyer_name,
+        )
         msg.attach(MIMEText(html, "html"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, to_email, msg.as_string())
         print(f"✅ Reminder sent to {to_email} for case: {case_title}")
+        return True
     except Exception as e:
         print(f"❌ Email send failed to {to_email}: {e}")
+        return False
+
+
+def _init_firebase():
+    """Initialize Firebase Admin SDK if not already done."""
+    import firebase_admin
+    from firebase_admin import credentials
+    if not firebase_admin._apps:
+        sa_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
+        if os.path.exists(sa_path):
+            cred = credentials.Certificate(sa_path)
+            firebase_admin.initialize_app(cred)
+            print("✅ Firebase Admin SDK initialized")
+        else:
+            raise FileNotFoundError("serviceAccountKey.json not found in backend/")
 
 
 def check_hearings_and_remind():
     """Scheduled job: check cases with hearing tomorrow and send emails."""
     try:
-        import firebase_admin
-        from firebase_admin import credentials, firestore as admin_firestore
-
-        # Initialize Firebase Admin SDK (use service account key)
-        if not firebase_admin._apps:
-            # Try to use default credentials (set GOOGLE_APPLICATION_CREDENTIALS env var)
-            # or place serviceAccountKey.json in the backend folder
-            import os
-            sa_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
-            if os.path.exists(sa_path):
-                cred = credentials.Certificate(sa_path)
-                firebase_admin.initialize_app(cred)
-            else:
-                print("⚠️ No serviceAccountKey.json found — email reminders skipped.")
-                return
+        _init_firebase()
+        from firebase_admin import firestore as admin_firestore
 
         admin_db = admin_firestore.client()
         tomorrow = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+        print(f"🔍 Checking hearings for {tomorrow}...")
 
         cases_ref = admin_db.collection("cases")
-        docs = cases_ref.where("next_hearing_date", "==", tomorrow).stream()
+        docs = list(cases_ref.where("next_hearing_date", "==", tomorrow).stream())
+        print(f"📋 Found {len(docs)} case(s) with hearing tomorrow")
+
+        # Build user cache for names
+        users_cache = {}
 
         for d in docs:
             c = d.to_dict()
-            title = c.get("title", "Your Case")
+            title        = c.get("title", "Your Case")
+            case_id      = c.get("case_id", "")
             lawyer_email = c.get("lawyerEmail")
             client_email = c.get("clientEmail")
+            lawyer_name  = c.get("lawyerName", "")
+            lawyer_id    = c.get("lawyerId")
+            litigant_id  = c.get("litigantId")
+
+            # Get names from users collection if not cached
+            for uid in [lawyer_id, litigant_id]:
+                if uid and uid not in users_cache:
+                    try:
+                        u_doc = admin_db.collection("users").document(uid).get()
+                        if u_doc.exists:
+                            users_cache[uid] = u_doc.to_dict().get("fullName", "")
+                    except:
+                        pass
+
+            lawyer_display = users_cache.get(lawyer_id, lawyer_name) or "Your Lawyer"
+            client_display = users_cache.get(litigant_id, "") or "Litigant"
+
             if lawyer_email:
-                send_reminder_email(lawyer_email, title, tomorrow, "Lawyer")
+                send_reminder_email(
+                    to_email=lawyer_email, case_title=title, hearing_date=tomorrow,
+                    role="Lawyer", case_id=case_id, recipient_name=lawyer_display,
+                )
             if client_email:
-                send_reminder_email(client_email, title, tomorrow, "Client")
+                send_reminder_email(
+                    to_email=client_email, case_title=title, hearing_date=tomorrow,
+                    role="Litigant", case_id=case_id, recipient_name=client_display,
+                    lawyer_name=lawyer_display,
+                )
+
+        print(f"✅ Reminder job completed — {len(docs)} case(s) processed")
     except Exception as e:
+        import traceback
         print(f"❌ Reminder job error: {e}")
+        traceback.print_exc()
 
 
 # ── Start scheduler ──
 try:
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
-    scheduler.add_job(check_hearings_and_remind, "cron", hour=8, minute=0)  # Daily at 8 AM
+    scheduler.add_job(check_hearings_and_remind, "cron", hour=8, minute=0)
     scheduler.start()
     print("✅ Hearing reminder scheduler started (runs daily at 8:00 AM)")
 except ImportError:
     print("⚠️ APScheduler not installed — install with: pip install apscheduler")
 
 
+# ── Test Endpoints ──
 @app.post("/test-reminder/")
 def test_reminder():
-    """Manually trigger the reminder check (for testing)."""
+    """Manually trigger the reminder check for tomorrow's hearings."""
     check_hearings_and_remind()
-    return {"status": "Reminder check triggered"}
+    return {"status": "Reminder check triggered — see server logs"}
+
+
+class TestEmailRequest(BaseModel):
+    email: str
+    case_title: str = "Property Dispute — Sharma vs. Gupta"
+    hearing_date: str = ""
+
+@app.post("/send-test-email/")
+def send_test_email(req: TestEmailRequest):
+    """Send a test email to verify the email system works."""
+    hearing = req.hearing_date or (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+    success = send_reminder_email(
+        to_email=req.email,
+        case_title=req.case_title,
+        hearing_date=hearing,
+        role="Litigant",
+        case_id="TEST-001",
+        recipient_name="Test User",
+        lawyer_name="Adv. Govind Kushwaha",
+    )
+    return {"status": "sent" if success else "failed", "to": req.email}
+
+
+# ─────────────────────────────────────────────
+# ✦ Case Added Email Notification
+# ─────────────────────────────────────────────
+class CaseAddedEmailRequest(BaseModel):
+    client_email: str
+    client_name: str = "Client"
+    lawyer_name: str = ""
+    lawyer_email: str = ""
+    case_id: str = ""
+    case_title: str = ""
+    category: str = ""
+    description: str = ""
+    status: str = "Open"
+    next_hearing_date: str = ""
+    client_phone: str = ""
+
+
+def build_case_added_email(req: CaseAddedEmailRequest) -> str:
+    hearing_row = f"""
+        <tr>
+            <td style="padding:7px 0;color:#6b7280;font-size:13px;" width="150">📅 Next Hearing</td>
+            <td style="padding:7px 0;color:#1a2744;font-size:13px;font-weight:600;">{req.next_hearing_date}</td>
+        </tr>""" if req.next_hearing_date else ""
+
+    desc_block = f"""
+        <p style="margin:0 0 8px;color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Case Description</p>
+        <p style="margin:0;color:#374151;font-size:13px;line-height:1.7;">{req.description}</p>""" if req.description else ""
+
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1a2744 0%,#243460 100%);padding:32px 36px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;">⚖️ LawyerLink</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:13px;letter-spacing:1px;text-transform:uppercase;">New Case Registered</p>
+          </td>
+        </tr>
+
+        <!-- Banner -->
+        <tr>
+          <td style="background:linear-gradient(90deg,#c9a84c,#e8c96d);padding:12px 36px;text-align:center;">
+            <p style="margin:0;color:#1a2744;font-size:14px;font-weight:700;">📁 A new case has been added to your account</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#1a2744;font-size:16px;margin:0 0 20px;">Dear <strong>{req.client_name}</strong>,</p>
+            <p style="color:#4b5563;font-size:14px;margin:0 0 28px;line-height:1.7;">
+              Your lawyer <strong style="color:#1a2744;">{req.lawyer_name}</strong> has registered a new case on your behalf on the LawyerLink platform.
+              Below are the complete details of your case.
+            </p>
+
+            <!-- Case Card -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faff;border:1px solid #e5e7eb;border-left:4px solid #c9a84c;border-radius:12px;margin:0 0 24px;">
+              <tr><td style="padding:20px 24px;">
+                <p style="margin:0 0 4px;color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Case Information</p>
+                <p style="margin:0 0 16px;color:#1a2744;font-size:20px;font-weight:700;">{req.case_title}</p>
+                <table cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="padding:7px 0;color:#6b7280;font-size:13px;" width="150">📋 Case ID</td>
+                    <td style="padding:7px 0;color:#1a2744;font-size:13px;font-weight:600;">{req.case_id or "—"}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:7px 0;color:#6b7280;font-size:13px;">⚖️ Category</td>
+                    <td style="padding:7px 0;color:#1a2744;font-size:13px;font-weight:600;">{req.category or "—"}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:7px 0;color:#6b7280;font-size:13px;">📌 Status</td>
+                    <td style="padding:7px 0;color:#1a2744;font-size:13px;font-weight:600;">{req.status}</td>
+                  </tr>
+                  {hearing_row}
+                </table>
+              </td></tr>
+            </table>
+
+            <!-- Description -->
+            {"<table width='100%' cellpadding='0' cellspacing='0' style='background:#f8faff;border:1px solid #e5e7eb;border-radius:12px;margin:0 0 24px;'><tr><td style='padding:20px 24px;'>" + desc_block + "</td></tr></table>" if req.description else ""}
+
+            <!-- Lawyer Card -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #e0e7ff;border-radius:12px;margin:0 0 28px;">
+              <tr><td style="padding:16px 20px;">
+                <p style="margin:0 0 10px;color:#9ca3af;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Your Lawyer</p>
+                <table cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:4px 0;color:#6b7280;font-size:13px;" width="80">👨‍⚖️ Name</td>
+                    <td style="padding:4px 0;color:#1a2744;font-size:13px;font-weight:600;">{req.lawyer_name}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:#6b7280;font-size:13px;">✉️ Email</td>
+                    <td style="padding:4px 0;color:#1a2744;font-size:13px;font-weight:600;">{req.lawyer_email}</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 16px;">
+                <a href="https://lawyer-link-frontend.vercel.app/litigant"
+                   style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#e8c96d);color:#1a2744;text-decoration:none;padding:15px 40px;border-radius:50px;font-size:14px;font-weight:800;letter-spacing:0.5px;">
+                  View My Case Dashboard →
+                </a>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8faff;border-top:1px solid #e5e7eb;padding:24px 36px;text-align:center;">
+            <p style="margin:0 0 6px;color:#9ca3af;font-size:12px;">This is an automated notification from LawyerLink</p>
+            <p style="margin:0 0 6px;color:#9ca3af;font-size:11px;">⚖️ LawyerLink — Connecting Justice, Empowering Rights</p>
+            <p style="margin:0;color:#d1d5db;font-size:10px;">© {date.today().year} LawyerLink. All rights reserved.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+"""
+
+
+@app.post("/send-case-added-email/")
+def send_case_added_email(req: CaseAddedEmailRequest):
+    """Send a case registration email to the client when a lawyer adds a case."""
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"⚖️ New Case Registered: {req.case_title} | LawyerLink"
+        msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
+        msg["To"]      = req.client_email
+
+        msg.attach(MIMEText(build_case_added_email(req), "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_SENDER, req.client_email, msg.as_string())
+
+        print(f"✅ Case-added email sent to {req.client_email} for case: {req.case_title}")
+        return {"status": "sent", "to": req.client_email}
+    except Exception as e:
+        print(f"❌ Case-added email failed: {e}")
+        return {"status": "failed", "error": str(e)}

@@ -5,6 +5,7 @@ import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { addCaseEvent } from "../../utils/caseEvents";
 import { createNotification } from "../../utils/notifications";
+import DocAnalyzer from "./DocAnalyzer";
 
 // ─── Cloudinary config ────────────────────────────────────
 const CLOUD_NAME   = "dzfoal3fg";
@@ -36,6 +37,7 @@ export default function CaseDocuments({ caseId, isLawyer }) {
   const [progress, setProgress]     = useState(0);
   const [uploadError, setUploadError] = useState("");
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [activeAnalysis, setActiveAnalysis] = useState(null); // { name, url }
 
   const fileInputRef  = useRef(null);
   const caseInfoRef   = useRef(null);
@@ -202,14 +204,24 @@ export default function CaseDocuments({ caseId, isLawyer }) {
               </span>
             </div>
           </div>
-          <a
-            href={getDownloadUrl(file.url, file.type)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="docs-download-btn"
-          >
-            {isInlineImage(file.type) ? "🔍 View" : "⬇️ Download"}
-          </a>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a
+              href={getDownloadUrl(file.url, file.type)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="docs-download-btn"
+              style={{ flex: 1 }}
+            >
+              {isInlineImage(file.type) ? "🔍 View" : "⬇️ Download"}
+            </a>
+            <button
+              className="docs-download-btn"
+              style={{ flex: 1, cursor: "pointer", background: "linear-gradient(135deg,#1a2744,#243460)", color: "white", border: "none" }}
+              onClick={() => setActiveAnalysis({ name: file.name, url: file.url })}
+            >
+              🤖 Analyze
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -217,6 +229,12 @@ export default function CaseDocuments({ caseId, isLawyer }) {
 
   return (
     <>
+      {activeAnalysis && (
+        <DocAnalyzer
+          fileName={activeAnalysis.name}
+          onClose={() => setActiveAnalysis(null)}
+        />
+      )}
       <style>{`
         .docs-wrapper { font-family:'Inter',sans-serif; }
         .docs-upload-zone { border:2px dashed #c7d2fe; border-radius:18px; padding:28px 24px; text-align:center; background:linear-gradient(135deg,#f8faff,#f0f4ff); transition:all .25s; margin-bottom:18px; }

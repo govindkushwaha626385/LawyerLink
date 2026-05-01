@@ -181,6 +181,9 @@ export default function Navbar() {
               {role === "litigant" && (
                 <li className="nav-item"><Link className="ll-nav-link" to="/smart-match" onClick={closeMenu}>🤖 AI Match</Link></li>
               )}
+              {(role === "lawyer" || role === "litigant") && (
+                <li className="nav-item"><Link className="ll-nav-link" to="/document-analyzer" onClick={closeMenu}>📄 Doc Analyzer</Link></li>
+              )}
               {role === "admin" && (
                 <li className="nav-item"><Link className="ll-nav-link" to="/admin" onClick={closeMenu}>⚙️ Admin</Link></li>
               )}
