@@ -1,7 +1,8 @@
 // src/components/Catalog/LawyersCatalog.js
 import React, { useEffect, useState, useCallback } from "react";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db, auth } from "../../firebase";
+import BookingModal from "../BookingModal";
 
 export default function LawyersCatalog() {
   const [lawyers, setLawyers] = useState([]);
@@ -9,6 +10,8 @@ export default function LawyersCatalog() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
+  const [booking, setBooking] = useState(null);
+  const currentUser = auth.currentUser;
 
   useEffect(() => {
     const fetchLawyers = async () => {
@@ -127,6 +130,8 @@ export default function LawyersCatalog() {
         .cat-btn-email:hover { background: #16a34a; color: white; }
         .cat-btn-wa { color: #16a34a; border-color: #dcfce7; background: #f0fdf4; }
         .cat-btn-wa:hover { background: #16a34a; color: white; border-color: #16a34a; }
+        .cat-btn-book { background: linear-gradient(135deg, #1a2744, #243460); color: white; border-color: transparent; width: 100%; margin-top: 6px; }
+        .cat-btn-book:hover { box-shadow: 0 4px 14px rgba(26,39,68,0.25); transform: translateY(-1px); }
 
         /* Empty */
         .cat-empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
@@ -219,6 +224,11 @@ export default function LawyersCatalog() {
                         </a>
                       </>
                     )}
+                    {currentUser && (
+                      <button onClick={() => setBooking(lawyer)} className="cat-contact-btn cat-btn-book">
+                        📅 Book Consultation
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -232,6 +242,7 @@ export default function LawyersCatalog() {
           )}
         </div>
       </div>
+      {booking && <BookingModal lawyer={booking} currentUser={currentUser} onClose={() => setBooking(null)} />}
     </>
   );
 }

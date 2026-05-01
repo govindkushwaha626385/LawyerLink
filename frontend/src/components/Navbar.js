@@ -174,12 +174,17 @@ export default function Navbar() {
             <ul className="navbar-nav align-items-lg-center gap-lg-3">
               <li className="nav-item"><Link className="ll-nav-link" to="/about" onClick={closeMenu}>About</Link></li>
               <li className="nav-item"><Link className="ll-nav-link" to="/contact" onClick={closeMenu}>Contact</Link></li>
+              <li className="nav-item"><Link className="ll-nav-link" to="/terms" onClick={closeMenu}>T&C</Link></li>
+              <li className="nav-item"><Link className="ll-nav-link" to="/privacy" onClick={closeMenu}>Privacy</Link></li>
               {role !== "lawyer" && (
                 <li className="nav-item"><Link className="ll-nav-link" to="/catalog" onClick={closeMenu}>Lawyers</Link></li>
               )}
               <li className="nav-item"><Link className="ll-nav-link" to="/chatbot" onClick={closeMenu}>AI Chatbot</Link></li>
               {role === "litigant" && (
                 <li className="nav-item"><Link className="ll-nav-link" to="/smart-match" onClick={closeMenu}>🤖 AI Match</Link></li>
+              )}
+              {(role === "lawyer" || role === "litigant") && (
+                <li className="nav-item"><Link className="ll-nav-link" to="/calendar" onClick={closeMenu}>📅 Calendar</Link></li>
               )}
               {(role === "lawyer" || role === "litigant") && (
                 <li className="nav-item"><Link className="ll-nav-link" to="/document-analyzer" onClick={closeMenu}>📄 Doc Analyzer</Link></li>

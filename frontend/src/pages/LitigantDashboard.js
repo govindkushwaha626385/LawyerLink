@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { db, auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -7,8 +7,37 @@ import { useAuthState } from "react-firebase-hooks/auth";
 export default function LitigantDashboard() {
   const [user] = useAuthState(auth);
   const [cases, setCases] = useState([]);
+  const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedConsId, setSelectedConsId] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
   const navigate = useNavigate();
+
+  const activeCons = consultations.find(c => c.id === selectedConsId);
+
+  const sendLitigantReply = async () => {
+    if (!replyText.trim() || !activeCons) return;
+    setSending(true);
+    try {
+      const newMessage = { sender: "litigant", text: replyText, timestamp: new Date().toISOString() };
+      const currentMessages = activeCons.messages || [];
+      // Legacy initialization
+      if (!activeCons.messages && activeCons.replyMessage) {
+        currentMessages.push({ sender: "lawyer", text: activeCons.replyMessage, timestamp: activeCons.repliedAt || new Date().toISOString() });
+      }
+      const updatedMessages = [...currentMessages, newMessage];
+
+      await updateDoc(doc(db, "consultations", activeCons.id), {
+        messages: updatedMessages
+      });
+      setReplyText("");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     const fetchCases = async () => {
@@ -28,6 +57,18 @@ export default function LitigantDashboard() {
       }
     };
     fetchCases();
+  }, [user]);
+
+  // Fetch Consultations
+  useEffect(() => {
+    if (!user?.email) return;
+    const q = query(collection(db, "consultations"), where("litigantEmail", "==", user.email.trim().toLowerCase()));
+    const unsub = onSnapshot(q, snap => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+      setConsultations(list);
+    });
+    return () => unsub();
   }, [user]);
 
   const statusColor = (status) => {
@@ -170,6 +211,97 @@ export default function LitigantDashboard() {
             </button>
           </div>
 
+          {/* ── Consultations ── */}
+          {consultations.length > 0 && (
+            <div className="lit-section" style={{ marginBottom: 24 }}>
+              <div className="lit-section-header" style={{ marginBottom: 16 }}>
+                <h3 className="lit-section-title">🤝 My Consultations</h3>
+              </div>
+              <div style={{ display: "grid", gap: 14, gridTemplateColumns: activeCons ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }}>
+                {/* Active Chat Panel */}
+                {activeCons ? (
+                  <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #e5e7eb", padding: 24 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                      <div>
+                        <h4 style={{ margin: "0 0 4px", color: "#1a2744", fontWeight: 700 }}>Chat with {activeCons.lawyerName}</h4>
+                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6b7280" }}>Regarding: {activeCons.caseType || "Legal Consultation"}</p>
+                      </div>
+                      <button onClick={() => setSelectedConsId(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 50, padding: "4px 14px", fontSize: "0.8rem", fontWeight: 600, color: "#374151", cursor: "pointer" }}>✕ Close</button>
+                    </div>
+
+                    <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 16, padding: "20px", height: "340px", overflowY: "auto", marginBottom: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "inset 0 2px 10px rgba(0,0,0,0.02)" }}>
+                      <div style={{ alignSelf: "flex-end", background: "#1a2744", color: "white", borderRadius: "18px 18px 4px 18px", padding: "12px 16px", maxWidth: "75%", boxShadow: "0 2px 8px rgba(26,39,68,0.15)" }}>
+                        <p style={{ fontSize: "0.7rem", color: "#9ca3af", fontWeight: 600, margin: "0 0 4px", letterSpacing: "0.5px" }}>You (Initial Request)</p>
+                        <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{activeCons.message}</p>
+                      </div>
+
+                      {!activeCons.messages && activeCons.replyMessage && (
+                        <div style={{ alignSelf: "flex-start", background: "#f1f5f9", color: "#1e293b", borderRadius: "18px 18px 18px 4px", padding: "12px 16px", maxWidth: "75%", border: "1px solid #e2e8f0" }}>
+                          <p style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 600, margin: "0 0 4px", letterSpacing: "0.5px" }}>{activeCons.lawyerName}</p>
+                          <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{activeCons.replyMessage}</p>
+                        </div>
+                      )}
+
+                      {activeCons.messages?.map((msg, idx) => {
+                        const isMe = msg.sender === "litigant";
+                        return (
+                          <div key={idx} style={{ 
+                            alignSelf: isMe ? "flex-end" : "flex-start",
+                            background: isMe ? "#1a2744" : "#f1f5f9",
+                            color: isMe ? "white" : "#1e293b",
+                            border: isMe ? "none" : "1px solid #e2e8f0",
+                            borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                            padding: "12px 16px", maxWidth: "75%",
+                            boxShadow: isMe ? "0 2px 8px rgba(26,39,68,0.15)" : "none"
+                          }}>
+                            <p style={{ fontSize: "0.7rem", color: isMe ? "#9ca3af" : "#64748b", fontWeight: 600, margin: "0 0 4px", letterSpacing: "0.5px" }}>{isMe ? "You" : activeCons.lawyerName}</p>
+                            <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{msg.text}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <input 
+                        type="text" 
+                        value={replyText} 
+                        onChange={e => setReplyText(e.target.value)} 
+                        placeholder="Type a message to your lawyer..." 
+                        onKeyDown={e => e.key === "Enter" && sendLitigantReply()}
+                        style={{ flexGrow: 1, border: "1.5px solid #e5e7eb", borderRadius: 50, padding: "10px 18px", fontSize: "0.85rem", outline: "none" }}
+                      />
+                      <button onClick={sendLitigantReply} disabled={sending || !replyText.trim()} style={{ background: "#1a2744", color: "white", border: "none", borderRadius: 50, padding: "10px 24px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+                        {sending ? "..." : "Send"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  consultations.map(c => (
+                    <div key={c.id} style={{ padding: "18px 20px", borderRadius: 14, border: "1px solid rgba(26,39,68,0.06)", background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", cursor: "pointer", transition: "all 0.2s" }} onClick={() => setSelectedConsId(c.id)} onMouseOver={e => e.currentTarget.style.borderColor = "#c9a84c"} onMouseOut={e => e.currentTarget.style.borderColor = "rgba(26,39,68,0.06)"}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                        <div>
+                          <p style={{ margin: "0 0 2px", fontWeight: 700, color: "#1a2744", fontSize: "0.95rem" }}>{c.lawyerName}</p>
+                          <p style={{ margin: 0, fontSize: "0.75rem", color: "#6b7280" }}>{c.caseType || "Legal Consultation"}</p>
+                        </div>
+                        <span style={{
+                          background: c.status === "accepted" ? "#dcfce7" : c.status === "declined" ? "#fee2e2" : "#fef3c7",
+                          color: c.status === "accepted" ? "#16a34a" : c.status === "declined" ? "#dc2626" : "#d97706",
+                          padding: "4px 12px", borderRadius: 50, fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase"
+                        }}>
+                          {c.status}
+                        </span>
+                      </div>
+                      <div style={{ background: "#f9fafb", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: "0.8rem", color: "#374151" }}>📅 <strong>{c.preferredDate}</strong> at <strong>{c.preferredTime}</strong></p>
+                        <p style={{ margin: 0, fontSize: "0.75rem", color: "#4338ca", fontWeight: 600 }}>💬 Click to open chat thread</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Cases section */}
           <div className="lit-section">
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22, flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -209,6 +341,11 @@ export default function LitigantDashboard() {
                         <span className="lit-status-badge" style={{ background: col.bg, color: col.text }}>
                           {c.status || "In Progress"}
                         </span>
+                        {c.aiPrediction && (
+                          <span className="lit-status-badge" style={{ background: "rgba(201,168,76,0.15)", color: "#b48b2d", marginLeft: 8, border: "1px solid rgba(201,168,76,0.3)" }}>
+                            🤖 Win Prob: {c.aiPrediction.win_probability}
+                          </span>
+                        )}
                         <div className="lit-hearing-box">
                           📅 Next Hearing: <strong>{c.next_hearing_date || "Not set"}</strong>
                         </div>

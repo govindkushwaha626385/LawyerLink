@@ -30,10 +30,13 @@ import Chatbot from "./components/Chatbot/Chatbot";
 import ChatbotWidget from "./components/Chatbot/ChatbotWidget";
 import About from "./components/Static/About";
 import Contact from "./components/Static/Contact";
+import Terms from "./components/Static/Terms";
+import Privacy from "./components/Static/Privacy";
 import SmartMatch from "./pages/SmartMatch";
 import AdminPanel from "./pages/AdminPanel";
 import CasePredictor from "./pages/CasePredictor";
 import DocumentAnalyzer from "./pages/DocumentAnalyzer";
+import HearingCalendar from "./pages/HearingCalendar";
 
 // --- Scroll to Top Component ---
 function ScrollToTop() {
@@ -80,6 +83,8 @@ function AppLayout() {
           <Route path="/chatbot" element={<Chatbot />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
 
           {/* --- Protected Routes --- */}
           <Route
@@ -151,6 +156,10 @@ function AppLayout() {
           {/* --- New Feature Routes --- */}
           <Route path="/smart-match" element={<SmartMatch />} />
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
+          <Route
+            path="/calendar"
+            element={<ProtectedRoute><HearingCalendar /></ProtectedRoute>}
+          />
           <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route
             path="/case/:id/predict"

@@ -14,14 +14,14 @@ import { v4 as uuidv4 } from "uuid";
 import { addCaseEvent } from "../../utils/caseEvents";
 import { createNotification } from "../../utils/notifications";
 
-export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumber }) {
+export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumber, initialData }) {
   const [caseData, setCaseData] = useState({
-    title: "",
-    clientName: "",
-    clientEmail: "",
-    clientPhone: "",
-    category: "",
-    description: "",
+    title: initialData?.title || "",
+    clientName: initialData?.clientName || "",
+    clientEmail: initialData?.clientEmail || "",
+    clientPhone: initialData?.clientPhone || "",
+    category: initialData?.category || "",
+    description: initialData?.description || "",
     next_hearing_date: "",
     status: "Open",
   });

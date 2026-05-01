@@ -85,7 +85,8 @@ export default function LitigantCaseDetails() {
         @media(max-width:560px){.lcd-info-grid{grid-template-columns:1fr;}}
         .lcd-info-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; font-weight: 600; margin-bottom: 2px; }
         .lcd-info-value { font-size: 0.88rem; font-weight: 600; color: #1a2744; }
-        .lcd-hearing { background: linear-gradient(135deg, #eef2ff, #e0e7ff); border-left: 4px solid #1a2744; border-radius: 10px; padding: 13px 16px; font-weight: 700; color: #1a2744; font-size: 0.85rem; margin-top: 16px; }
+        .lcd-hearing { background: linear-gradient(135deg, #eef2ff, #e0e7ff); border-left: 4px solid #1a2744; border-radius: 10px; padding: 13px 16px; font-weight: 700; color: #1a2744; font-size: 0.85rem; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .lcd-ai-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(201,168,76,0.15); color: #b48b2d; border: 1px solid rgba(201,168,76,0.3); }
 
         /* Review button */
         .lcd-review-btn { background: linear-gradient(135deg, #c9a84c, #e8c96d); color: #1a2744; border: none; border-radius: 50px; padding: 9px 22px; font-size: 0.83rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
@@ -145,7 +146,10 @@ export default function LitigantCaseDetails() {
               </div>
 
               <div className="lcd-hearing">
-                📅 Next Hearing: <strong>{caseData.next_hearing_date || "Not set"}</strong>
+                <span>📅 Next Hearing: <strong>{caseData.next_hearing_date || "Not set"}</strong></span>
+                {caseData.aiPrediction && (
+                  <span className="lcd-ai-badge">🤖 AI Probability: {caseData.aiPrediction.win_probability}</span>
+                )}
               </div>
             </div>
           </div>
@@ -163,10 +167,34 @@ export default function LitigantCaseDetails() {
               {/* ── Overview ── */}
               {activeTab === "Overview" && (
                 <>
+                  {caseData.aiPrediction && (
+                    <div style={{ background: "linear-gradient(135deg, #1a2744, #243460)", borderRadius: 16, padding: "22px 26px", color: "white", marginBottom: 24, boxShadow: "0 8px 24px rgba(26,39,68,0.15)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", margin: 0, color: "#c9a84c" }}>🤖 AI Case Predictor</h3>
+                        <span style={{ background: "rgba(255,255,255,0.1)", padding: "4px 12px", borderRadius: 50, fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{caseData.aiPrediction.case_strength} Strength</span>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <p style={{ margin: "0 0 4px", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700 }}>Predicted Verdict</p>
+                          <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "white" }}>{caseData.aiPrediction.verdict_prediction}</p>
+                        </div>
+                        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <p style={{ margin: "0 0 4px", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700 }}>Win Probability</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#e8c96d" }}>{caseData.aiPrediction.win_probability}</p>
+                            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>Confidence: {caseData.aiPrediction.confidence_level}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <h3 className="lcd-section-title">📋 Case Description</h3>
-                  <p style={{ fontSize: "0.88rem", lineHeight: 1.75, color: "#374151", background: "#fafafa", padding: 14, borderRadius: 12, whiteSpace: "pre-line" }}>
-                    {caseData.description || "No description provided."}
-                  </p>
+                  <div style={{ background: "#f8faff", border: "1px solid #e5e7eb", padding: 18, borderRadius: 16, borderLeft: "4px solid #1a2744" }}>
+                    <p style={{ fontSize: "0.88rem", lineHeight: 1.8, color: "#374151", margin: 0, whiteSpace: "pre-line" }}>
+                      {caseData.description || "No description provided by the lawyer yet."}
+                    </p>
+                  </div>
 
                   {/* Hearing Notes (read-only) */}
                   {(caseData.hearingNotes || []).length > 0 && (

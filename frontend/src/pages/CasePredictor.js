@@ -1,7 +1,7 @@
 // src/pages/CasePredictor.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase";
 
 const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
@@ -55,7 +55,9 @@ function buildPrompt(c) {
   "key_strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
   "key_risks": ["<risk 1>", "<risk 2>", "<risk 3>"],
   "applicable_laws": ["<law/section 1>", "<law/section 2>", "<law/section 3>"],
-  "recommended_actions": ["<action 1>", "<action 2>", "<action 3>", "<action 4>"],
+  "opposing_arguments": ["<opposing arg 1>", "<opposing arg 2>", "<opposing arg 3>"],
+  "counter_strategies": ["<strategy to counter arg 1>", "<strategy 2>", "<strategy 3>"],
+  "similar_precedents": [{"case": "<case name>", "court": "<court>", "year": "<year>", "relevance": "<why relevant>"}],
   "hearing_analysis": "<analysis of hearing notes and what they indicate>",
   "document_assessment": "<assessment of available documents and any gaps>",
   "timeline_insights": "<insights from the case timeline and progression>",
@@ -180,12 +182,17 @@ export default function CasePredictor() {
   const [loading, setLoading]     = useState(false);
   const [fetching, setFetching]   = useState(true);
   const [error, setError]         = useState("");
+  const [history, setHistory]     = useState([]); // prediction history from Firestore
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     const fetchCase = async () => {
       try {
         const snap = await getDoc(doc(db, "cases", id));
         if (snap.exists()) setCaseData({ id: snap.id, ...snap.data() });
+        // Load prediction history
+        const histSnap = await getDocs(query(collection(db, "cases", id, "predictions"), orderBy("analyzedAt", "desc")));
+        setHistory(histSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (e) { setError("Failed to load case."); }
       finally { setFetching(false); }
     };
@@ -198,11 +205,64 @@ export default function CasePredictor() {
     try {
       const result = await analyzeCaseWithAI(buildPrompt(caseData));
       setAnalysis(result);
+      // Save to Firestore (case-level predictions subcollection + summary on case doc)
+      try {
+        await addDoc(collection(db, "cases", id, "predictions"), {
+          ...result,
+          analyzedAt: new Date().toISOString(),
+          caseTitle: caseData.title,
+        });
+        await updateDoc(doc(db, "cases", id), {
+          aiPrediction: {
+            verdict_prediction:  result.verdict_prediction,
+            win_probability:     result.win_probability,
+            confidence_level:    result.confidence_level,
+            case_strength:       result.case_strength,
+            analyzedAt:          new Date().toISOString(),
+          },
+        });
+        // Refresh history
+        const histSnap = await getDocs(query(collection(db, "cases", id, "predictions"), orderBy("analyzedAt", "desc")));
+        setHistory(histSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (_) { /* non-critical */ }
     } catch (e) {
       setError(`AI analysis failed: ${e.message}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportPDF = () => {
+    if (!analysis || !caseData) return;
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <html><head><title>AI Prediction Report - ${caseData.title}</title>
+      <style>body{font-family:Arial,sans-serif;margin:40px;color:#1a2744}h1{color:#1a2744}h2{color:#243460;border-bottom:2px solid #c9a84c;padding-bottom:6px}p,li{line-height:1.7;color:#374151}table{width:100%;border-collapse:collapse}td{padding:10px;border-bottom:1px solid #e5e7eb}@media print{button{display:none}}</style></head>
+      <body>
+      <h1>⚖️ LawyerLink — AI Case Outcome Report</h1>
+      <p><strong>Case:</strong> ${caseData.title} (${caseData.case_id})<br>
+      <strong>Category:</strong> ${caseData.category}<br>
+      <strong>Generated:</strong> ${new Date().toLocaleString("en-IN")}</p>
+      <h2>Prediction Summary</h2>
+      <table><tr><td><strong>Verdict</strong></td><td>${analysis.verdict_prediction}</td></tr>
+      <tr><td><strong>Win Probability</strong></td><td>${analysis.win_probability}%</td></tr>
+      <tr><td><strong>Confidence</strong></td><td>${analysis.confidence_level}</td></tr>
+      <tr><td><strong>Case Strength</strong></td><td>${analysis.case_strength}%</td></tr>
+      <tr><td><strong>Duration</strong></td><td>${analysis.estimated_duration}</td></tr></table>
+      <h2>Summary</h2><p>${analysis.summary}</p>
+      <h2>Key Strengths</h2><ul>${(analysis.key_strengths||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
+      <h2>Key Risks</h2><ul>${(analysis.key_risks||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
+      <h2>Opposing Arguments</h2><ul>${(analysis.opposing_arguments||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
+      <h2>Counter Strategies</h2><ul>${(analysis.counter_strategies||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
+      <h2>Applicable Laws</h2><p>${(analysis.applicable_laws||[]).join(" · ")}</p>
+      <h2>Recommended Actions</h2><ol>${(analysis.recommended_actions||[]).map(s=>`<li>${s}</li>`).join("")}</ol>
+      <h2>Settlement Advice</h2><p>${analysis.settlement_advice}</p>
+      <h2>Critical Next Step</h2><p><strong>${analysis.critical_next_step}</strong></p>
+      <hr><p style="font-size:11px;color:#9ca3af">This report is AI-generated and for informational purposes only. Not legal advice. © LawyerLink</p>
+      <button onclick="window.print()">🖨️ Print / Save PDF</button>
+      </body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
   };
 
   const confidenceColor = { High: "#16a34a", Medium: "#d97706", Low: "#dc2626" };
@@ -262,11 +322,45 @@ export default function CasePredictor() {
                 {loading ? (
                   <><div className="spinner-border spinner-border-sm" style={{ width: 16, height: 16 }} /> Analyzing...</>
                 ) : (
-                  <>🔮 Run AI Analysis</>
+                  <>🔮 {history.length > 0 ? "Re-Run Analysis" : "Run AI Analysis"}</>
                 )}
               </button>
             </div>
+            {/* History + PDF bar */}
+            {history.length > 0 && (
+              <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button onClick={() => setShowHistory(h => !h)} style={{ background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 50, padding: "6px 16px", color: "rgba(255,255,255,0.8)", fontSize: ".78rem", fontWeight: 600, cursor: "pointer" }}>
+                  📊 {history.length} Past Prediction{history.length > 1 ? "s" : ""} {showHistory ? "▲" : "▼"}
+                </button>
+                {analysis && (
+                  <button onClick={exportPDF} style={{ background: "linear-gradient(135deg,#c9a84c,#e8c96d)", border: "none", borderRadius: 50, padding: "6px 16px", color: "#1a2744", fontSize: ".78rem", fontWeight: 700, cursor: "pointer" }}>
+                    📄 Export PDF Report
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Prediction History Timeline */}
+          {showHistory && history.length > 0 && (
+            <div style={{ background: "white", borderRadius: 16, padding: "22px 24px", boxShadow: "0 2px 14px rgba(26,39,68,.07)", marginBottom: 20, border: "1px solid rgba(26,39,68,.04)" }}>
+              <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: "1rem", color: "#1a2744", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>📊 Prediction History — How This Case Has Evolved</h3>
+              <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+                {history.map((h, i) => {
+                  const vMap = { Win: "#16a34a", "Partial Win": "#d97706", Settle: "#2563eb", Dismiss: "#dc2626" };
+                  const col = vMap[h.verdict_prediction] || "#1a2744";
+                  return (
+                    <div key={h.id} style={{ background: "#f8faff", border: `2px solid ${col}33`, borderRadius: 14, padding: "14px 18px", minWidth: 180, flexShrink: 0 }}>
+                      <p style={{ fontSize: ".68rem", color: "#9ca3af", margin: "0 0 6px", fontWeight: 700, textTransform: "uppercase" }}>Run #{history.length - i}</p>
+                      <p style={{ fontWeight: 800, color: col, fontSize: "1.1rem", margin: 0 }}>{h.win_probability}%</p>
+                      <p style={{ fontSize: ".78rem", color: col, fontWeight: 700, margin: "2px 0" }}>{h.verdict_prediction}</p>
+                      <p style={{ fontSize: ".7rem", color: "#9ca3af", margin: 0 }}>{new Date(h.analyzedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Loading State */}
           {loading && (
@@ -360,6 +454,33 @@ export default function CasePredictor() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Opposing Arguments + Counter Strategies */}
+              {analysis.opposing_arguments?.length > 0 && (
+                <div className="cp-grid">
+                  <Section title="Opposing Side's Arguments" icon="⚔️">
+                    <ListItems items={analysis.opposing_arguments} color="#dc2626" icon="🔴" />
+                  </Section>
+                  <Section title="Counter Strategies" icon="🛡️">
+                    <ListItems items={analysis.counter_strategies || []} color="#16a34a" icon="✅" />
+                  </Section>
+                </div>
+              )}
+
+              {/* Similar Precedents */}
+              {analysis.similar_precedents?.length > 0 && (
+                <Section title="Similar Precedent Cases" icon="🏛️">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 12 }}>
+                    {analysis.similar_precedents.map((p, i) => (
+                      <div key={i} style={{ background: "#f8faff", border: "1px solid #e5e7eb", borderLeft: "3px solid #4338ca", borderRadius: 10, padding: "12px 14px" }}>
+                        <p style={{ fontWeight: 700, color: "#1a2744", fontSize: ".85rem", margin: "0 0 2px" }}>{p.case}</p>
+                        <p style={{ fontSize: ".72rem", color: "#4338ca", fontWeight: 600, margin: "0 0 6px" }}>{p.court} · {p.year}</p>
+                        <p style={{ fontSize: ".78rem", color: "#374151", margin: 0, lineHeight: 1.55 }}>{p.relevance}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
               )}
 
               {/* Main Grid */}

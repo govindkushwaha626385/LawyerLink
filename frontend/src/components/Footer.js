@@ -119,7 +119,7 @@ export default function Footer() {
               </div>
               <div className="ft-contact-item">
                 <span className="ft-contact-icon">📍</span>
-                <p className="ft-contact-text">Sagar, Madhya Pradesh, India</p>
+                <p className="ft-contact-text">LawyerLink Pvt. Ltd., Tech Park, Sagar, MP, India</p>
               </div>
             </div>
           </div>
@@ -131,8 +131,8 @@ export default function Footer() {
             © {new Date().getFullYear()} <strong>LawyerLink</strong> — Built with <span>♥</span> by Govind Singh Kushwaha
           </p>
           <div className="ft-policy-links">
-            <span className="ft-policy-link" style={{cursor:"default"}}>Privacy Policy</span>
-            <span className="ft-policy-link" style={{cursor:"default"}}>Terms of Service</span>
+            <Link to="/privacy" className="ft-policy-link">Privacy Policy</Link>
+            <Link to="/terms" className="ft-policy-link">Terms of Service</Link>
           </div>
         </div>
       </footer>

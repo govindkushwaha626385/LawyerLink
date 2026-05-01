@@ -11,10 +11,10 @@ export default function About() {
   ];
 
   const features = [
-    { icon: "🤖", title: "AI-Powered Recommendations", desc: "Our system analyses case descriptions and matches them with relevant legal precedents from Indian court records." },
-    { icon: "📁", title: "Smart Case Management", desc: "Lawyers can create, update, and track cases in real time. Litigants get full visibility into their case status." },
-    { icon: "🔒", title: "Secure & Private", desc: "All data is encrypted and stored securely on Firebase. Your legal information stays private." },
-    { icon: "💬", title: "Legal AI Chatbot", desc: "Get instant answers to legal questions through our AI chatbot, available 24/7 in plain language." },
+    { icon: "🤖", title: "AI Legal Predictor", desc: "Our proprietary AI models analyze case precedents from Indian High Courts and the Supreme Court to generate outcome probabilities." },
+    { icon: "📁", title: "End-to-End Case Management", desc: "Advocates and Litigants share a synchronized dashboard for hearings, encrypted document storage, and direct communication." },
+    { icon: "🔒", title: "Privileged & Secure", desc: "Built with bank-grade encryption to protect Attorney-Client privilege under Section 126 of the Indian Evidence Act." },
+    { icon: "💬", title: "Jurisdiction-Aware AI", desc: "Our virtual legal assistant is trained on the Bharatiya Nyaya Sanhita (BNS) and regional state laws to provide accurate preliminary guidance." },
   ];
 
   return (
@@ -118,13 +118,13 @@ export default function About() {
               <p className="ab-section-label">Our Story</p>
               <h2 className="ab-section-title">Who We <span>Are</span></h2>
               <p className="ab-para">
-                <strong>LawyerLink</strong> bridges the gap between litigants and lawyers using modern technology and trust. Our mission is to make legal help accessible, transparent, and intelligent for everyone.
+                <strong>LawyerLink Private Limited</strong> bridges the gap between litigants and legal professionals using state-of-the-art technology. Our mission is to digitize the Indian legal ecosystem, making justice accessible, transparent, and driven by data.
               </p>
               <p className="ab-para">
-                Built for the Indian legal ecosystem, we connect clients with verified legal professionals and bring AI-powered insights to every case.
+                Operating strictly within the ambit of the Advocates Act, 1961, we connect citizens with verified Bar Council Advocates and supercharge their workflow with Artificial Intelligence.
               </p>
               <ul className="ab-check-list">
-                {["Smart lawyer recommendations", "AI chatbot for instant assistance", "Secure case management", "Transparent client-lawyer communication"].map(item => (
+                {["Verified Bar Council Advocates", "Data-driven case win probabilities", "End-to-End encrypted case sharing", "Compliance with IT Act, 2000"].map(item => (
                   <li key={item} className="ab-check-item">
                     <span className="ab-check-icon">✓</span>{item}
                   </li>

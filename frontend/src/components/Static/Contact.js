@@ -15,9 +15,9 @@ export default function Contact() {
   };
 
   const contactItems = [
-    { icon: "✉️", label: "Email", value: "govindkushwahabusiness@gmail.com", href: "mailto:govindkushwahabusiness@gmail.com" },
-    { icon: "📞", label: "Phone", value: "+91 6263 859 670", href: "tel:+916263859670" },
-    { icon: "📍", label: "Location", value: "Sagar, Madhya Pradesh, India", href: null },
+    { icon: "✉️", label: "Legal & Support Email", value: "govindkushwahabusiness@gmail.com", href: "mailto:govindkushwahabusiness@gmail.com" },
+    { icon: "📞", label: "Grievance Officer Phone", value: "+91 6263 859 670", href: "tel:+916263859670" },
+    { icon: "📍", label: "Registered Office", value: "LawyerLink Pvt. Ltd., Tech Park, Sagar, Madhya Pradesh, India", href: null },
   ];
 
   return (
@@ -96,12 +96,11 @@ export default function Contact() {
       `}</style>
 
       <div className="ct-wrapper">
-        {/* Hero */}
         <div className="ct-hero">
           <div className="ct-orb ct-orb1" /><div className="ct-orb ct-orb2" />
-          <div className="ct-hero-badge">📞 Contact Us</div>
-          <h1 className="ct-hero-title">Get in <span>Touch</span></h1>
-          <p className="ct-hero-sub">Have a question or need help? We'd love to hear from you. Reach out anytime.</p>
+          <div className="ct-hero-badge">💬 Get in Touch</div>
+          <h1 className="ct-hero-title">Contact <span>LawyerLink</span></h1>
+          <p className="ct-hero-sub">For legal disputes, DMCA takedowns, grievance redressal, or enterprise inquiries, our dedicated team is here to assist you.</p>
         </div>
 
         <div style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #f8f9fc 50%, #fdf8ee 100%)", minHeight: "60vh" }}>

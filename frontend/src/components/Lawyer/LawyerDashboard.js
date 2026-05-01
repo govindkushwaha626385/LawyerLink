@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc, onSnapshot, orderBy } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 import AddCaseModal from "./AddCaseModal";
 import AnalyticsSection from "./AnalyticsSection";
+import MyConsultations from "./MyConsultations";
 
 
 export default function LawyerDashboard() {
@@ -12,6 +13,7 @@ export default function LawyerDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [advocateNumber, setAdvocateNumber] = useState("");
   const [lawyerName, setLawyerName] = useState("");
+  const [pendingConsultations, setPendingConsultations] = useState(0);
   const navigate = useNavigate();
   const user = auth.currentUser;
 
@@ -39,6 +41,14 @@ export default function LawyerDashboard() {
       setClients(uniqueClients);
     };
     fetchData();
+  }, [user]);
+
+  // Track pending consultations count
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "consultations"), where("lawyerId", "==", user.uid), where("status", "==", "pending"));
+    const unsub = onSnapshot(q, snap => setPendingConsultations(snap.size), err => console.error(err));
+    return () => unsub();
   }, [user]);
 
   const statusColor = (status) => {
@@ -128,6 +138,10 @@ export default function LawyerDashboard() {
           padding: 10px 14px; margin-top: 12px;
           font-size: 0.82rem; font-weight: 600; color: #1a2744;
         }
+        .ld-ai-badge {
+          display: inline-flex; align-items: center; gap: 4px; background: rgba(201,168,76,0.15); color: #b48b2d;
+          border-radius: 50px; padding: 3px 12px; font-size: 0.73rem; font-weight: 800; border: 1px solid rgba(201,168,76,0.3); margin-top: 8px;
+        }
 
         /* Client cards */
         .ld-client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; }
@@ -208,6 +222,31 @@ export default function LawyerDashboard() {
             </div>
           </div>
 
+          {/* ── AI Legal Suite Banner ── */}
+          <div style={{
+            background: "linear-gradient(-45deg,#0f1d3a,#1a2744,#243460)",
+            borderRadius: 20, padding: "22px 28px", marginBottom: 28,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            flexWrap: "wrap", gap: 14, boxShadow: "0 8px 28px rgba(26,39,68,0.2)"
+          }}>
+            <div>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.05rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>
+                🤖 LawyerLink AI Suite
+              </p>
+              <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", margin: 0 }}>
+                Analyze documents, draft responses, and ask legal questions instantly.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={() => navigate("/document-analyzer")} style={{ background: "linear-gradient(135deg,#c9a84c,#e8c96d)", color: "#1a2744", border: "none", borderRadius: 50, padding: "8px 18px", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                📄 Doc Analyzer
+              </button>
+              <button onClick={() => navigate("/chatbot")} style={{ background: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 50, padding: "8px 18px", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+                💬 AI Chatbot
+              </button>
+            </div>
+          </div>
+
           {/* ── Cases ── */}
           <div className="ld-section">
             <div className="ld-section-header">
@@ -240,6 +279,9 @@ export default function LawyerDashboard() {
                         <p className="ld-case-meta">🏷️ {c.category || "General"}</p>
                         <p className="ld-case-meta">🧾 Case ID: <strong>{c.case_id}</strong></p>
                         <p className="ld-case-meta">🪪 Advocate No: <strong>{c.advocateNumber}</strong></p>
+                        {c.aiPrediction && (
+                          <span className="ld-ai-badge">🤖 Win Prob: {c.aiPrediction.win_probability}</span>
+                        )}
                         <div className="ld-hearing-box">
                           📅 Next Hearing: <strong>{c.next_hearing_date || "Not set"}</strong>
                         </div>
@@ -282,6 +324,21 @@ export default function LawyerDashboard() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* ── Consultations ── */}
+          <div className="ld-section">
+            <div className="ld-section-header">
+              <h3 className="ld-section-title">
+                📅 Consultations
+                {pendingConsultations > 0 && (
+                  <span style={{ background: "#fee2e2", color: "#dc2626", borderRadius: 50, padding: "2px 12px", fontSize: ".75rem", fontWeight: 700 }}>
+                    {pendingConsultations} pending
+                  </span>
+                )}
+              </h3>
+            </div>
+            <MyConsultations />
           </div>
 
           {/* ── Analytics ── */}

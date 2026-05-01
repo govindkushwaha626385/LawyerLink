@@ -7,10 +7,11 @@ import {
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import AdminAnalytics from "../components/Admin/AdminAnalytics";
 
 const ADMIN_EMAILS = ["govindkushwahabusiness@gmail.com"]; // ← add more admin emails here
 
-const TABS = ["Overview", "Lawyers", "Litigants", "Cases", "Reviews"];
+const TABS = ["Overview", "Analytics", "Lawyers", "Litigants", "Cases", "Reviews"];
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab]     = useState("Overview");
@@ -473,6 +474,13 @@ export default function AdminPanel() {
             </>
           )}
 
+          {/* ════ ANALYTICS ════ */}
+          {activeTab === "Analytics" && (
+            <div style={{ padding: "8px 0" }}>
+              <AdminAnalytics lawyers={lawyers} litigants={litigants} cases={cases} reviews={reviews} />
+            </div>
+          )}
+
           {/* ════════════════════════════════ LAWYERS ════════════════════════════════ */}
           {activeTab === "Lawyers" && (
             <div className="adm-card">
@@ -499,6 +507,7 @@ export default function AdminPanel() {
                       <th>Specialization</th>
                       <th>Advocate #</th>
                       <th>Experience</th>
+                      <th>Cases</th>
                       <th>Rating</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -519,6 +528,11 @@ export default function AdminPanel() {
                         <td>{l.category||"—"}</td>
                         <td style={{fontFamily:"monospace",fontSize:".78rem"}}>{l.advocateNumber||"—"}</td>
                         <td>{l.experience ? l.experience+" yrs" : "—"}</td>
+                        <td>
+                          <span className="badge badge-open">
+                            {cases.filter(c => c.lawyerEmail === l.email).length}
+                          </span>
+                        </td>
                         <td>
                           <span className="star-rating">{"⭐".repeat(Math.round(l.rating||0))||"—"}</span>
                           <span style={{fontSize:".72rem",color:"#9ca3af",marginLeft:4}}>
@@ -634,6 +648,7 @@ export default function AdminPanel() {
                       <th>Client</th>
                       <th>Lawyer</th>
                       <th>Type</th>
+                      <th>AI Prediction</th>
                       <th>Next Hearing</th>
                       <th>Status</th>
                     </tr>
@@ -645,6 +660,15 @@ export default function AdminPanel() {
                         <td style={{fontSize:".78rem",color:"#6b7280"}}>{c.clientEmail||"—"}</td>
                         <td style={{fontSize:".78rem",color:"#6b7280"}}>{c.lawyerEmail||"—"}</td>
                         <td>{c.caseType||"—"}</td>
+                        <td>
+                          {c.aiPrediction ? (
+                            <span style={{ background: "rgba(201,168,76,0.15)", color: "#b48b2d", padding: "4px 10px", borderRadius: "50px", fontSize: "0.7rem", fontWeight: 700, border: "1px solid rgba(201,168,76,0.3)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                              🤖 {c.aiPrediction.win_probability}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: ".75rem", color: "#9ca3af" }}>—</span>
+                          )}
+                        </td>
                         <td style={{fontSize:".78rem"}}>{c.next_hearing_date||c.nextHearingDate||"—"}</td>
                         <td>
                           <span className={`badge ${
