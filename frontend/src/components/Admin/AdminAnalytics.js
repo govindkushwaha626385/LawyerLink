@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  AreaChart, Area, LineChart, Line,
+  AreaChart, Area,
 } from "recharts";
 
 const PALETTE = ["#1a2744", "#c9a84c", "#16a34a", "#d97706", "#dc2626", "#7c3aed", "#0ea5e9", "#ec4899"];
@@ -285,7 +285,6 @@ export default function AdminAnalytics({ lawyers, litigants, cases, reviews }) {
             <div>
               {stats.upcomingHearings.map((c, i) => {
                 const daysLeft = Math.ceil((new Date(c.next_hearing_date) - new Date()) / 86400000);
-                const col = STATUS_COLORS[c.status] || STATUS_COLORS.Open;
                 return (
                   <div key={i} className="adm-hearing-row">
                     <div>

@@ -5,7 +5,6 @@ import { db, auth } from "../firebase";
 import BookingModal from "../components/BookingModal";
 
 const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
-const BACKEND = "http://127.0.0.1:8000";
 
 // ── Main Component ───────────────────────────────────────────────
 // ── AI Match ────────────────────────────────────────────────────

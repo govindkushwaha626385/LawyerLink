@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  LineChart, Line, AreaChart, Area, RadialBarChart, RadialBar,
+  AreaChart, Area, RadialBarChart, RadialBar,
 } from "recharts";
 
 const PALETTE = ["#1a2744", "#c9a84c", "#16a34a", "#d97706", "#dc2626", "#7c3aed", "#0ea5e9", "#ec4899"];

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, where, doc, getDoc, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 import AddCaseModal from "./AddCaseModal";
