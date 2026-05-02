@@ -8,12 +8,11 @@ import { createNotification } from "../../utils/notifications";
 import DocAnalyzer from "./DocAnalyzer";
 
 // ─── Cloudinary config ────────────────────────────────────
-const CLOUD_NAME   = "dzfoal3fg";
+const CLOUD_NAME = "dzfoal3fg";
 const UPLOAD_PRESET = "lawyerlink_documents";
 
-// Upload endpoint — always use /image/upload/ (works for all file types
-// including PDFs, Word, Excel with an unsigned preset)
-const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+// Upload endpoint — use /auto/upload/ so Cloudinary detects raw docs (PDF, Excel) vs images
+const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
 // Build the download URL:
 //   • Real images (jpg/png/gif/webp) → serve inline
@@ -22,26 +21,23 @@ const isInlineImage = (type = "") =>
   /^image\/(jpeg|jpg|png|gif|webp|svg)/.test(type);
 
 const getDownloadUrl = (url = "", type = "") => {
-  if (!url) return url;
-  if (isInlineImage(type)) return url;
-  // Insert fl_attachment AFTER the /upload/ segment
-  return url.replace(/\/upload\//, "/upload/fl_attachment/");
+  return url;
 };
 // ──────────────────────────────────────────────────────────
 
 export default function CaseDocuments({ caseId, isLawyer }) {
-  const [documents, setDocuments]   = useState([]);
+  const [documents, setDocuments] = useState([]);
   // eslint-disable-next-line no-unused-vars
-  const [caseInfo, setCaseInfo]     = useState(null);
-  const [uploading, setUploading]   = useState(false);
-  const [progress, setProgress]     = useState(0);
+  const [caseInfo, setCaseInfo] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [activeAnalysis, setActiveAnalysis] = useState(null); // { name, url }
 
-  const fileInputRef  = useRef(null);
-  const caseInfoRef   = useRef(null);
-  const xhrRef        = useRef(null);
+  const fileInputRef = useRef(null);
+  const caseInfoRef = useRef(null);
+  const xhrRef = useRef(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setCurrentUser(u));
@@ -103,13 +99,13 @@ export default function CaseDocuments({ caseId, isLawyer }) {
           currentUser.displayName || currentUser.email?.split("@")[0] || "User";
 
         const docEntry = {
-          name:            file.name,
-          url:             res.secure_url,   // always /image/upload/...
-          type:            file.type || "application/octet-stream",
-          size:            file.size,
-          uploadedBy:      uploaderName,
-          uploadedByRole:  isLawyer ? "lawyer" : "litigant",
-          uploadedAt:      new Date().toISOString(),
+          name: file.name,
+          url: res.secure_url,   // always /image/upload/...
+          type: file.type || "application/octet-stream",
+          size: file.size,
+          uploadedBy: uploaderName,
+          uploadedByRole: isLawyer ? "lawyer" : "litigant",
+          uploadedAt: new Date().toISOString(),
         };
 
         await updateDoc(doc(db, "cases", caseId), { documents: arrayUnion(docEntry) });
@@ -133,8 +129,8 @@ export default function CaseDocuments({ caseId, isLawyer }) {
       }
     });
 
-    xhr.addEventListener("error",  () => { setUploading(false); setProgress(0); setUploadError("Network error. Check your connection."); });
-    xhr.addEventListener("abort",  () => { setUploading(false); setProgress(0); });
+    xhr.addEventListener("error", () => { setUploading(false); setProgress(0); setUploadError("Network error. Check your connection."); });
+    xhr.addEventListener("abort", () => { setUploading(false); setProgress(0); });
 
     xhr.open("POST", UPLOAD_URL);
     xhr.send(formData);
@@ -144,10 +140,10 @@ export default function CaseDocuments({ caseId, isLawyer }) {
     const ext = name.split(".").pop().toLowerCase();
     if (/^image\//.test(type)) return "🖼️";
     if (type.includes("pdf") || ext === "pdf") return "📄";
-    if (type.includes("word") || ["doc","docx"].includes(ext)) return "📝";
-    if (type.includes("sheet") || type.includes("excel") || ["xls","xlsx"].includes(ext)) return "📊";
+    if (type.includes("word") || ["doc", "docx"].includes(ext)) return "📝";
+    if (type.includes("sheet") || type.includes("excel") || ["xls", "xlsx"].includes(ext)) return "📊";
     if (ext === "txt") return "📃";
-    if (["zip","rar","7z"].includes(ext)) return "🗜️";
+    if (["zip", "rar", "7z"].includes(ext)) return "🗜️";
     return "📁";
   };
 
@@ -159,11 +155,11 @@ export default function CaseDocuments({ caseId, isLawyer }) {
   };
 
   const formatDate = (iso) => {
-    try { return new Date(iso).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" }); }
+    try { return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }); }
     catch { return "—"; }
   };
 
-  const lawyerDocs   = documents.filter(d => d.uploadedByRole === "lawyer");
+  const lawyerDocs = documents.filter(d => d.uploadedByRole === "lawyer");
   const litigantDocs = documents.filter(d => d.uploadedByRole === "litigant");
 
   const UploadZone = ({ label }) => (
@@ -171,7 +167,7 @@ export default function CaseDocuments({ caseId, isLawyer }) {
       <div className="docs-upload-cloud">☁️</div>
       <p className="docs-upload-title">{label}</p>
       <p className="docs-upload-sub">PDF, Word, Excel, Images · Max 10 MB</p>
-      <input ref={fileInputRef} type="file" style={{ display:"none" }}
+      <input ref={fileInputRef} type="file" style={{ display: "none" }}
         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xls,.xlsx,.txt,.zip"
         onChange={handleUpload} />
       <button className="docs-upload-btn"
@@ -182,7 +178,7 @@ export default function CaseDocuments({ caseId, isLawyer }) {
       {uploading && (
         <>
           <div className="docs-progress-track">
-            <div className="docs-progress-fill" style={{ width:`${progress}%` }} />
+            <div className="docs-progress-fill" style={{ width: `${progress}%` }} />
           </div>
           <p className="docs-progress-label">{progress}% uploaded</p>
         </>
@@ -196,10 +192,10 @@ export default function CaseDocuments({ caseId, isLawyer }) {
         <div key={`${file.name}-${i}`} className="docs-card">
           <div className="docs-card-top">
             <div className="docs-file-icon">{getFileIcon(file.type, file.name)}</div>
-            <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <p className="docs-file-name">{file.name}</p>
               <p className="docs-file-meta">{formatSize(file.size)} · {formatDate(file.uploadedAt)}</p>
-              <span className={`docs-badge docs-badge-${file.uploadedByRole||"lawyer"}`}>
+              <span className={`docs-badge docs-badge-${file.uploadedByRole || "lawyer"}`}>
                 {file.uploadedByRole === "litigant" ? "👤 Client" : "⚖️ Lawyer"}
               </span>
             </div>
@@ -278,7 +274,7 @@ export default function CaseDocuments({ caseId, isLawyer }) {
           <div className="docs-error">
             <span>{uploadError}</span>
             <button onClick={() => setUploadError("")}
-              style={{ background:"none", border:"none", color:"#dc2626", cursor:"pointer", fontWeight:800, fontSize:"1rem", padding:0 }}>✕</button>
+              style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 800, fontSize: "1rem", padding: 0 }}>✕</button>
           </div>
         )}
 
@@ -303,8 +299,8 @@ export default function CaseDocuments({ caseId, isLawyer }) {
         {documents.length === 0 && (
           <div className="docs-empty">
             <div className="docs-empty-icon">📂</div>
-            <p style={{ fontSize:".85rem", margin:0, color:"#374151", fontWeight:600 }}>No documents yet</p>
-            <p style={{ fontSize:".78rem", margin:"4px 0 0", color:"#9ca3af" }}>
+            <p style={{ fontSize: ".85rem", margin: 0, color: "#374151", fontWeight: 600 }}>No documents yet</p>
+            <p style={{ fontSize: ".78rem", margin: "4px 0 0", color: "#9ca3af" }}>
               Upload files above to share with the other party.
             </p>
           </div>

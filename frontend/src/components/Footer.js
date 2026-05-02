@@ -21,8 +21,8 @@ export default function Footer() {
   const socialLinks = [
     { icon: <FaFacebook />, href: "#", label: "Facebook" },
     { icon: <FaTwitter />, href: "#", label: "Twitter" },
-    { icon: <FaLinkedin />, href: "#", label: "LinkedIn" },
-    { icon: <FaGithub />, href: "#", label: "GitHub" },
+    { icon: <FaLinkedin />, href: "https://www.linkedin.com/in/gsk6263/", label: "LinkedIn" },
+    { icon: <FaGithub />, href: "https://github.com/govindkushwaha626385", label: "GitHub" },
   ];
 
   return (
@@ -143,7 +143,7 @@ export default function Footer() {
               </div>
               <div className="ft-contact-item">
                 <span className="ft-contact-icon">📍</span>
-                <p className="ft-contact-text">LawyerLink Pvt. Ltd.,<br/>Tech Park, Sagar, MP, India</p>
+                <p className="ft-contact-text">LawyerLink Pvt. Ltd.,<br />Tech Park, Sagar, MP, India</p>
               </div>
             </div>
           </div>

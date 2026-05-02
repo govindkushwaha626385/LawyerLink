@@ -4,7 +4,8 @@ import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
-const DAYS   = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS     = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS_MOB = ["S", "M", "T", "W", "T", "F", "S"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const STATUS_COLORS = {
@@ -151,8 +152,10 @@ export default function HearingCalendar() {
         .hc-nav-btn:hover { background:rgba(255,255,255,0.25); }
         .hc-days-row { display:grid; grid-template-columns:repeat(7,1fr); background:#f8faff; border-bottom:1px solid #e5e7eb; }
         .hc-day-label { text-align:center; padding:10px 0; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:#9ca3af; }
+        .hc-day-label .hc-day-full { display:inline; }
+        .hc-day-label .hc-day-short { display:none; }
         .hc-cal-body { display:grid; grid-template-columns:repeat(7,1fr); }
-        .hc-cell { min-height:80px; padding:8px 6px 4px; border-right:1px solid #f3f4f6; border-bottom:1px solid #f3f4f6; cursor:pointer; transition:background .15s; position:relative; }
+        .hc-cell { min-height:80px; padding:8px 6px 4px; border-right:1px solid #f3f4f6; border-bottom:1px solid #f3f4f6; cursor:pointer; transition:background .15s; position:relative; overflow:hidden; }
         .hc-cell:hover { background:#f8faff; }
         .hc-cell.today { background:#eef2ff; }
         .hc-cell.selected { background:#f0f4ff; box-shadow:inset 0 0 0 2px #1a2744; }
@@ -160,6 +163,8 @@ export default function HearingCalendar() {
         .hc-date-num { font-size:.82rem; font-weight:700; color:#374151; margin-bottom:4px; display:inline-block; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
         .hc-cell.today .hc-date-num { background:#1a2744; color:white; }
         .hc-event-dot { font-size:.65rem; border-radius:4px; padding:1px 4px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; display:block; }
+        .hc-event-label { display:block; }
+        .hc-event-circle { display:none; }
         .hc-upcoming-item { padding:12px 0; border-bottom:1px solid #f3f4f6; cursor:pointer; transition:all .2s; }
         .hc-upcoming-item:hover { background:#f8faff; margin:0 -16px; padding:12px 16px; border-radius:10px; border-color:transparent; }
         .hc-upcoming-item:last-child { border-bottom:none; }
@@ -167,6 +172,19 @@ export default function HearingCalendar() {
         .hc-selected-panel { padding:20px 24px; }
         .hc-case-card { background:#f8faff; border:1px solid #e5e7eb; border-left:4px solid #c9a84c; border-radius:12px; padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:all .2s; }
         .hc-case-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(26,39,68,0.1); }
+
+        @media(max-width:540px){
+          .hc-page { padding:16px 10px 48px; }
+          .hc-cal-header { padding:16px 16px; }
+          .hc-day-label { padding:7px 0; font-size:0.62rem; letter-spacing:0; }
+          .hc-day-label .hc-day-full { display:none; }
+          .hc-day-label .hc-day-short { display:inline; }
+          .hc-cell { min-height:52px; padding:5px 3px 3px; }
+          .hc-date-num { font-size:.72rem; width:22px; height:22px; margin-bottom:2px; }
+          .hc-event-label { display:none; }
+          .hc-event-circle { display:block; width:8px; height:8px; border-radius:50%; margin:2px auto 0; }
+          .hc-selected-panel { padding:14px 16px; }
+        }
       `}</style>
 
       <div className="hc-page">
@@ -195,7 +213,12 @@ export default function HearingCalendar() {
 
               {/* Day Labels */}
               <div className="hc-days-row">
-                {DAYS.map(d => <div key={d} className="hc-day-label">{d}</div>)}
+                {DAYS.map((d, i) => (
+                  <div key={d} className="hc-day-label">
+                    <span className="hc-day-full">{d}</span>
+                    <span className="hc-day-short">{DAYS_MOB[i]}</span>
+                  </div>
+                ))}
               </div>
 
               {/* Calendar Grid */}
@@ -222,16 +245,19 @@ export default function HearingCalendar() {
                         return (
                           <span key={i} className="hc-event-dot"
                             style={{ background: col.bg, color: col.text }}>
-                            {c.title?.slice(0, 12)}{c.title?.length > 12 ? "…" : ""}
+                            {/* Desktop: show text label */}
+                            <span className="hc-event-label">{c.title?.slice(0, 10)}{c.title?.length > 10 ? "…" : ""}</span>
+                            {/* Mobile: show colored dot */}
+                            <span className="hc-event-circle" style={{ background: col.dot }} />
                           </span>
                         );
                       })}
                       {dayCases.length > 2 && (
-                        <span style={{ fontSize: ".62rem", color: "#9ca3af", fontWeight: 600 }}>+{dayCases.length - 2} more</span>
+                        <span style={{ fontSize: ".62rem", color: "#9ca3af", fontWeight: 600 }} className="hc-event-label">+{dayCases.length - 2}</span>
                       )}
                       
                       {notesMap[ds] && notesMap[ds].length > 0 && (
-                        <div style={{ display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap", justifyContent: "center" }}>
                           {notesMap[ds].map((_, idx) => (
                             <div key={`dot-${idx}`} style={{ width: 6, height: 6, borderRadius: "50%", background: "#4f46e5" }} />
                           ))}
