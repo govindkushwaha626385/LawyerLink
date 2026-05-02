@@ -1,6 +1,6 @@
 // src/pages/HearingCalendar.js
 import React, { useEffect, useState, useMemo } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
@@ -15,16 +15,25 @@ const STATUS_COLORS = {
 
 export default function HearingCalendar() {
   const [cases, setCases]         = useState([]);
+  const [notes, setNotes]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [current, setCurrent]     = useState(new Date());
   const [selected, setSelected]   = useState(null); // selected date string "YYYY-MM-DD"
   const [userRole, setUserRole]   = useState(null);
+  
+  // Note form state
+  const [showNoteForm, setShowNoteForm] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteText, setNoteText] = useState("");
+  const [noteCaseId, setNoteCaseId] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+
   const navigate = useNavigate();
   const user = auth.currentUser;
 
   useEffect(() => {
     if (!user) return;
-    const fetchCases = async () => {
+    const fetchCasesAndNotes = async () => {
       try {
         // Try lawyer first, then litigant
         const lSnap = await getDocs(query(collection(db, "cases"), where("lawyerId",   "==", user.uid)));
@@ -38,10 +47,14 @@ export default function HearingCalendar() {
         setCases(unique.filter(c => c.next_hearing_date));
         if (lSnap.docs.length > 0) setUserRole("lawyer");
         else if (cSnap.docs.length > 0) setUserRole("litigant");
+
+        // Fetch calendar notes
+        const nSnap = await getDocs(query(collection(db, "calendar_notes"), where("userId", "==", user.uid)));
+        setNotes(nSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
-    fetchCases();
+    fetchCasesAndNotes();
   }, [user]);
 
   // Build date → cases map
@@ -68,6 +81,43 @@ export default function HearingCalendar() {
   const dateStr = (d) => `${year}-${pad(month + 1)}-${pad(d)}`;
 
   const selectedCases = selected ? (hearingMap[selected] || []) : [];
+  
+  const notesMap = useMemo(() => {
+    const map = {};
+    notes.forEach(n => {
+      if (!n.date) return;
+      if (!map[n.date]) map[n.date] = [];
+      map[n.date].push(n);
+    });
+    return map;
+  }, [notes]);
+
+  const selectedNotes = selected ? (notesMap[selected] || []) : [];
+
+  const handleSaveNote = async () => {
+    if (!noteTitle.trim() || !noteText.trim()) return;
+    setSavingNote(true);
+    try {
+      const newNote = {
+        userId: user.uid,
+        date: selected,
+        title: noteTitle,
+        caseId: noteCaseId,
+        text: noteText,
+        createdAt: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "calendar_notes"), newNote);
+      setNotes([...notes, { id: docRef.id, ...newNote }]);
+      setShowNoteForm(false);
+      setNoteTitle("");
+      setNoteText("");
+      setNoteCaseId("");
+    } catch (e) {
+      alert("Failed to save note");
+    } finally {
+      setSavingNote(false);
+    }
+  };
 
   // Upcoming hearings list (next 30 days)
   const upcoming = useMemo(() => {
@@ -179,6 +229,14 @@ export default function HearingCalendar() {
                       {dayCases.length > 2 && (
                         <span style={{ fontSize: ".62rem", color: "#9ca3af", fontWeight: 600 }}>+{dayCases.length - 2} more</span>
                       )}
+                      
+                      {notesMap[ds] && notesMap[ds].length > 0 && (
+                        <div style={{ display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" }}>
+                          {notesMap[ds].map((_, idx) => (
+                            <div key={`dot-${idx}`} style={{ width: 6, height: 6, borderRadius: "50%", background: "#4f46e5" }} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -201,32 +259,71 @@ export default function HearingCalendar() {
               {/* Selected Day Panel */}
               {selected && (
                 <div className="hc-card">
-                  <div style={{ background: "linear-gradient(135deg,#c9a84c,#e8c96d)", padding: "16px 24px" }}>
-                    <p style={{ fontFamily: "'Playfair Display',serif", color: "#1a2744", fontWeight: 700, margin: 0, fontSize: ".95rem" }}>
-                      📅 {new Date(selected + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
-                    </p>
-                    <p style={{ color: "#92400e", margin: "2px 0 0", fontSize: ".75rem", fontWeight: 600 }}>
-                      {selectedCases.length} hearing{selectedCases.length !== 1 ? "s" : ""} scheduled
-                    </p>
+                  <div style={{ background: "linear-gradient(135deg,#c9a84c,#e8c96d)", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <p style={{ fontFamily: "'Playfair Display',serif", color: "#1a2744", fontWeight: 700, margin: 0, fontSize: ".95rem" }}>
+                        📅 {new Date(selected + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
+                      </p>
+                      <p style={{ color: "#92400e", margin: "2px 0 0", fontSize: ".75rem", fontWeight: 600 }}>
+                        {selectedCases.length} hearing{selectedCases.length !== 1 ? "s" : ""}, {selectedNotes.length} note{selectedNotes.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => setShowNoteForm(!showNoteForm)}
+                      style={{ background: "#1a2744", color: "white", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: ".75rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                    >
+                      {showNoteForm ? "Cancel" : "+ Add Note"}
+                    </button>
                   </div>
+                  
                   <div className="hc-selected-panel">
-                    {selectedCases.length === 0 ? (
-                      <p style={{ color: "#9ca3af", fontSize: ".85rem", textAlign: "center", padding: "16px 0" }}>No hearings on this day</p>
-                    ) : (
-                      selectedCases.map((c, i) => {
-                        const col = STATUS_COLORS[c.status] || STATUS_COLORS.Open;
-                        return (
-                          <div key={i} className="hc-case-card" onClick={() => goCase(c.id)}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                              <p style={{ fontWeight: 700, color: "#1a2744", fontSize: ".88rem", margin: 0 }}>{c.title}</p>
-                              <span className="hc-badge" style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>{c.status}</span>
-                            </div>
-                            <p style={{ fontSize: ".75rem", color: "#6b7280", margin: 0 }}>👤 {c.clientName} · ⚖️ {c.category}</p>
-                            <p style={{ fontSize: ".72rem", color: "#c9a84c", margin: "4px 0 0", fontWeight: 600 }}>Tap to open case →</p>
-                          </div>
-                        );
-                      })
+                    {showNoteForm && (
+                      <div style={{ background: "#f8faff", padding: 16, borderRadius: 12, marginBottom: 16, border: "1px solid #e5e7eb" }}>
+                        <p style={{ fontSize: ".85rem", fontWeight: 700, color: "#1a2744", margin: "0 0 12px" }}>✏️ New Note</p>
+                        <input type="text" placeholder="Note Title" value={noteTitle} onChange={e => setNoteTitle(e.target.value)} style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d1d5db", marginBottom: 10, fontSize: ".8rem" }} />
+                        <select value={noteCaseId} onChange={e => setNoteCaseId(e.target.value)} style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d1d5db", marginBottom: 10, fontSize: ".8rem", backgroundColor: "white" }}>
+                          <option value="">-- Select Case (Optional) --</option>
+                          {cases.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                        </select>
+                        <textarea placeholder="Write your note here..." value={noteText} onChange={e => setNoteText(e.target.value)} rows={3} style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d1d5db", marginBottom: 10, fontSize: ".8rem", resize: "none" }} />
+                        <button onClick={handleSaveNote} disabled={savingNote || !noteTitle.trim() || !noteText.trim()} style={{ width: "100%", background: "#16a34a", color: "white", border: "none", borderRadius: 8, padding: "8px", fontSize: ".85rem", fontWeight: 600, cursor: "pointer" }}>
+                          {savingNote ? "Saving..." : "Save Note"}
+                        </button>
+                      </div>
                     )}
+
+                    {selectedCases.length === 0 && selectedNotes.length === 0 && !showNoteForm && (
+                      <p style={{ color: "#9ca3af", fontSize: ".85rem", textAlign: "center", padding: "16px 0", margin: 0 }}>No hearings or notes on this day</p>
+                    )}
+
+                    {selectedCases.map((c, i) => {
+                      const col = STATUS_COLORS[c.status] || STATUS_COLORS.Open;
+                      return (
+                        <div key={i} className="hc-case-card" onClick={() => goCase(c.id)}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                            <p style={{ fontWeight: 700, color: "#1a2744", fontSize: ".88rem", margin: 0 }}>{c.title}</p>
+                            <span className="hc-badge" style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>{c.status}</span>
+                          </div>
+                          <p style={{ fontSize: ".75rem", color: "#6b7280", margin: 0 }}>👤 {c.clientName} · ⚖️ {c.category}</p>
+                          <p style={{ fontSize: ".72rem", color: "#c9a84c", margin: "4px 0 0", fontWeight: 600 }}>Tap to open case →</p>
+                        </div>
+                      );
+                    })}
+
+                    {selectedNotes.map((n, i) => (
+                      <div key={`n${i}`} style={{ background: "white", border: "1px solid #e5e7eb", borderLeft: "4px solid #4f46e5", borderRadius: 12, padding: "14px 16px", marginBottom: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <p style={{ fontWeight: 700, color: "#1a2744", fontSize: ".85rem", margin: 0 }}>{n.title}</p>
+                          <span style={{ fontSize: ".65rem", background: "#eef2ff", color: "#4f46e5", padding: "2px 8px", borderRadius: 50, fontWeight: 700 }}>Note</span>
+                        </div>
+                        {n.caseId && (
+                          <p style={{ fontSize: ".7rem", color: "#6b7280", margin: "0 0 6px", cursor: "pointer", textDecoration: "underline" }} onClick={() => goCase(n.caseId)}>
+                            🔗 Related to: {cases.find(c => c.id === n.caseId)?.title || "Case"}
+                          </p>
+                        )}
+                        <p style={{ fontSize: ".78rem", color: "#4b5563", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{n.text}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
