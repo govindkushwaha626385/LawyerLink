@@ -1,5 +1,5 @@
 // src/utils/api.js
-const BASE_URL = "http://127.0.0.1:8000"; // ✅ your FastAPI backend URL
+const BASE_URL = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000"; // ✅ your FastAPI backend URL
 
 // --- AI Chatbot API ---
 export async function askChatbot(question) {

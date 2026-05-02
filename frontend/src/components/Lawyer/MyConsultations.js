@@ -3,7 +3,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/f
 import { db, auth } from "../../firebase";
 import AddCaseModal from "./AddCaseModal";
 
-const BACKEND = "http://127.0.0.1:8000";
+const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
 
 const STATUS_STYLE = {
   pending:  { bg: "#fef3c7", color: "#92400e", label: "⏳ Pending" },

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 
-const BACKEND = "http://127.0.0.1:8000";
+const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
 
 async function sendConsultationEmail(lawyerEmail, lawyerName, booking) {
   try {

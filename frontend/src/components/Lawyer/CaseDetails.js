@@ -56,7 +56,7 @@ export default function CaseDetails() {
   const fetchRecommendedCases = async (text) => {
     setRecLoading(true);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/recommend/", { text, top_k: 5 });
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000"}/recommend/`, { text, top_k: 5 });
       setRecommendedCases(response.data.results || []);
     } catch (error) {
       console.error("Error fetching recommended cases:", error);

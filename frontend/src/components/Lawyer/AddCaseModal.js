@@ -101,7 +101,7 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
       // Send case-added email to client
       try {
         const clientName = usersSnap.empty ? "" : (usersSnap.docs[0].data().fullName || "");
-        await fetch("http://127.0.0.1:8000/send-case-added-email/", {
+        await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000"}/send-case-added-email/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
