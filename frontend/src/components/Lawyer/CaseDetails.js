@@ -318,7 +318,7 @@ export default function CaseDetails() {
                     {recLoading ? (
                       <div style={{ textAlign: "center", padding: 32 }}>
                         <div className="spinner-border" style={{ color: "#1a2744" }} />
-                        <p className="mt-3" style={{ color: "#6b7280", fontSize: "0.83rem" }}>Analysing description...</p>
+                        <p className="mt-3" style={{ color: "#6b7280", fontSize: "0.83rem" }}>Analyzing Case Details</p>
                       </div>
                     ) : recommendedCases.length === 0 ? (
                       <p style={{ color: "#9ca3af", fontSize: "0.85rem" }}>No similar cases found.</p>
