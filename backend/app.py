@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModel
 from sentence_transformers import SentenceTransformer
@@ -715,24 +715,24 @@ def build_otp_email_html(otp: str) -> str:
     """
 
 @app.post("/send-otp-email/")
-def send_otp_email(req: OTPEmailRequest):
-    """Send an OTP email to the advocate for registration verification."""
-    try:
-        otp = str(random.randint(100000, 999999))
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"{otp} is your LawyerLink Verification OTP"
-        msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
-        msg["To"]      = req.email
+def send_otp_email(req: OTPEmailRequest, background_tasks: BackgroundTasks):
+    """Generate OTP, return it immediately, and send email in the background."""
+    otp = str(random.randint(100000, 999999))
 
-        msg.attach(MIMEText(build_otp_email_html(otp), "html"))
+    def dispatch_email():
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = f"{otp} is your LawyerLink Verification OTP"
+            msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
+            msg["To"]      = req.email
+            msg.attach(MIMEText(build_otp_email_html(otp), "html"))
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+                server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
+            print(f"✅ OTP email dispatched to {req.email}")
+        except Exception as e:
+            print(f"❌ OTP email dispatch failed: {e}")
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-            server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
-
-        print(f"✅ OTP email sent to {req.email}")
-        return {"status": "sent", "otp": otp} # returning OTP for frontend to verify (simplified)
-    except Exception as e:
-        print(f"❌ OTP email failed: {e}")
-        return {"status": "failed", "error": str(e)}
+    background_tasks.add_task(dispatch_email)
+    return {"status": "sent", "otp": otp}
 
