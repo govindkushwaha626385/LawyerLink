@@ -674,3 +674,65 @@ def send_consultation_reply(req: ConsultationReplyRequest):
         return {"status": "sent"}
     except Exception as e:
         return {"status": "failed", "error": str(e)}
+
+# ─────────────────────────────────────────────
+# ✦ OTP Email Notification
+# ─────────────────────────────────────────────
+import random
+
+class OTPEmailRequest(BaseModel):
+    email: str
+
+def build_otp_email_html(otp: str) -> str:
+    """Build a premium HTML email template for OTP."""
+    return f"""
+    <html>
+    <head><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');</style></head>
+    <body style="margin:0;padding:0;background:#f0f4ff;font-family:'Inter',sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 20px;">
+        <tr><td align="center">
+          <table width="100%" max-width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 8px 32px rgba(26,39,68,0.08);">
+            <tr><td style="background:linear-gradient(135deg,#1a2744,#243460);padding:30px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:24px;font-weight:800;letter-spacing:1px;">Lawyer<span style="color:#c9a84c;">Link</span></h1>
+            </td></tr>
+            <tr><td style="padding:40px 30px;">
+              <h2 style="color:#1a2744;font-size:20px;font-weight:800;margin:0 0 16px;">Verify your identity</h2>
+              <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 24px;">
+                You are registering as an Advocate on LawyerLink. Use the following One-Time Password to complete your verification.
+              </p>
+              <div style="background:#f8faff;border:2px dashed #c9a84c;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px;">
+                <span style="font-family:monospace;font-size:32px;font-weight:800;color:#1a2744;letter-spacing:8px;">{otp}</span>
+              </div>
+              <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+                If you did not request this OTP, please ignore this email. This OTP is valid for 10 minutes.
+              </p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>
+    """
+
+@app.post("/send-otp-email/")
+def send_otp_email(req: OTPEmailRequest):
+    """Send an OTP email to the advocate for registration verification."""
+    try:
+        otp = str(random.randint(100000, 999999))
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"{otp} is your LawyerLink Verification OTP"
+        msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
+        msg["To"]      = req.email
+
+        msg.attach(MIMEText(build_otp_email_html(otp), "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
+
+        print(f"✅ OTP email sent to {req.email}")
+        return {"status": "sent", "otp": otp} # returning OTP for frontend to verify (simplified)
+    except Exception as e:
+        print(f"❌ OTP email failed: {e}")
+        return {"status": "failed", "error": str(e)}
+

@@ -33,6 +33,9 @@ export default function Signup() {
     experience: "", category: "", advocateNumber: "",
     registrationDate: "",
   });
+  const [showOTP, setShowOTP]           = useState(false);
+  const [expectedOTP, setExpectedOTP]   = useState("");
+  const [enteredOTP, setEnteredOTP]     = useState("");
 
   const avatarInputRef = useRef(null);
   const location       = useLocation();
@@ -101,8 +104,51 @@ export default function Signup() {
           setError(`❌ Registration Date does not match our records for this Advocate Number. (Expected: ${storedDateISO})`);
           setLoading(false); return;
         }
+
+        if (!advData.email_id) {
+          setError("❌ No email found in master data for this Advocate Number. Cannot verify OTP.");
+          setLoading(false); return;
+        }
+
+        // Send OTP
+        const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${BACKEND}/send-otp-email/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: advData.email_id })
+        });
+        const data = await res.json();
+        if (data.status === "sent") {
+          setExpectedOTP(data.otp);
+          setShowOTP(true);
+        } else {
+          setError("❌ Failed to send OTP: " + data.error);
+        }
+        setLoading(false);
+        return; // wait for OTP verification
       }
 
+      // If Litigant, proceed directly
+      await finalizeSignup();
+    } catch (err) {
+      setError(err.message.replace("Firebase: ", "").replace(" (auth/", " (").replace(/\.$/, ""));
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (enteredOTP !== expectedOTP) {
+      setError("❌ Incorrect OTP. Please try again.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    setShowOTP(false);
+    await finalizeSignup();
+  };
+
+  const finalizeSignup = async () => {
+    try {
       // Upload avatar first (optional)
       let imageUrl = "";
       if (avatarFile) imageUrl = await uploadAvatar(avatarFile);
@@ -395,6 +441,65 @@ export default function Signup() {
           </p>
         </div>
       </div>
+
+      {/* ── OTP Verification Modal ── */}
+      {showOTP && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.6)", zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 20
+        }}>
+          <div style={{
+            background: "white", borderRadius: 24, padding: 32, width: "100%", maxWidth: 400,
+            boxShadow: "0 24px 48px rgba(0,0,0,0.2)", textAlign: "center", animation: "swFadeIn 0.3s ease"
+          }}>
+            <div style={{ fontSize: "3rem", marginBottom: 16 }}>🛡️</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "'Playfair Display', serif", color: "#1a2744" }}>Verify Identity</h3>
+            <p style={{ margin: "0 0 24px", color: "#6b7280", fontSize: "0.9rem", lineHeight: 1.5 }}>
+              We've sent a 6-digit OTP to the email registered with this Advocate Number. Please enter it below.
+            </p>
+            
+            {error && <div className="sw-error" style={{ marginBottom: 16, textAlign: "left" }}>{error}</div>}
+
+            <input 
+              type="text" 
+              maxLength={6}
+              value={enteredOTP}
+              onChange={(e) => setEnteredOTP(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              style={{
+                width: "100%", padding: "16px", borderRadius: 12, border: "2px solid #e5e7eb",
+                fontSize: "1.5rem", letterSpacing: "8px", textAlign: "center", fontWeight: 700,
+                color: "#1a2744", outline: "none", marginBottom: 24
+              }}
+            />
+
+            <button 
+              onClick={handleVerifyOTP} 
+              disabled={loading || enteredOTP.length !== 6}
+              style={{
+                width: "100%", padding: "14px", borderRadius: 50, border: "none",
+                background: "linear-gradient(135deg,#1a2744,#243460)", color: "white",
+                fontWeight: 700, cursor: "pointer", opacity: (loading || enteredOTP.length !== 6) ? 0.7 : 1
+              }}
+            >
+              {loading ? "Verifying..." : "Verify & Complete Signup"}
+            </button>
+            <button 
+              onClick={() => { setShowOTP(false); setLoading(false); setError(""); }}
+              style={{
+                width: "100%", padding: "12px", borderRadius: 50, border: "none",
+                background: "transparent", color: "#6b7280", fontWeight: 600,
+                cursor: "pointer", marginTop: 8
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+          <style>{`@keyframes swFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+        </div>
+      )}
     </>
   );
 }
