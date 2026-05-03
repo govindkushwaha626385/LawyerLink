@@ -13,6 +13,7 @@ export default function LawyerDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [advocateNumber, setAdvocateNumber] = useState("");
   const [lawyerName, setLawyerName] = useState("");
+  const [registrationDate, setRegistrationDate] = useState("");
   const [pendingConsultations, setPendingConsultations] = useState(0);
   const navigate = useNavigate();
   const user = auth.currentUser;
@@ -25,6 +26,7 @@ export default function LawyerDashboard() {
       if (userSnap.exists()) {
         setAdvocateNumber(userSnap.data().advocateNumber || "");
         setLawyerName(userSnap.data().fullName || "Lawyer");
+        setRegistrationDate(userSnap.data().registrationDate || "");
       }
     };
     fetchAdvocateNumber();
@@ -192,6 +194,26 @@ export default function LawyerDashboard() {
             <div>
               <h2 className="ld-greeting">⚖️ Welcome back, <span>{lawyerName.split(" ")[0]}</span></h2>
               <p className="ld-greeting-sub">Manage your cases and clients from your dashboard.</p>
+              {advocateNumber && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+                  <span style={{
+                    fontSize: "0.73rem", fontWeight: 700, background: "#eef2ff",
+                    color: "#3730a3", borderRadius: 50, padding: "3px 12px",
+                    display: "inline-flex", alignItems: "center", gap: 4
+                  }}>
+                    🪪 {advocateNumber}
+                  </span>
+                  {registrationDate && (
+                    <span style={{
+                      fontSize: "0.73rem", fontWeight: 700, background: "#dcfce7",
+                      color: "#166534", borderRadius: 50, padding: "3px 12px",
+                      display: "inline-flex", alignItems: "center", gap: 4
+                    }}>
+                      ✅ Registered: {new Date(registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <button className="ld-add-btn" onClick={() => setShowModal(true)}>
               ＋ Add New Case
@@ -271,16 +293,34 @@ export default function LawyerDashboard() {
                       <div className="ld-case-card-body">
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <h4 className="ld-case-title">{c.title}</h4>
-                          <span className="ld-status-badge" style={{ background: col.bg, color: col.text }}>
-                            {c.status}
-                          </span>
+                          <span className="ld-status-badge" style={{ background: col.bg, color: col.text }}>{c.status}</span>
                         </div>
+                        {/* Priority + Stage row */}
+                        {(c.priority || c.stage) && (
+                          <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                            {c.priority && (
+                              <span style={{
+                                fontSize: "0.68rem", fontWeight: 700, borderRadius: 50, padding: "2px 9px",
+                                background: c.priority==="Urgent"?"#fee2e2":c.priority==="High"?"#fef3c7":c.priority==="Medium"?"#fefce8":"#dcfce7",
+                                color: c.priority==="Urgent"?"#991b1b":c.priority==="High"?"#92400e":c.priority==="Medium"?"#854d0e":"#166534"
+                              }}>
+                                {c.priority==="Urgent"?"🔴":c.priority==="High"?"🟠":c.priority==="Medium"?"🟡":"🟢"} {c.priority}
+                              </span>
+                            )}
+                            {c.stage && (
+                              <span style={{ fontSize: "0.68rem", fontWeight: 600, borderRadius: 50, padding: "2px 9px", background: "#eef2ff", color: "#3730a3" }}>
+                                {c.stage}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <p className="ld-case-meta">👤 {c.clientName}</p>
                         <p className="ld-case-meta">🏷️ {c.category || "General"}</p>
+                        {c.courtName && <p className="ld-case-meta">🏛️ {c.courtName}</p>}
+                        {c.opposingParty && <p className="ld-case-meta">⚔️ vs {c.opposingParty}</p>}
                         <p className="ld-case-meta">🧾 Case ID: <strong>{c.case_id}</strong></p>
-                        <p className="ld-case-meta">🪪 Advocate No: <strong>{c.advocateNumber}</strong></p>
                         {c.aiPrediction && (
-                          <span className="ld-ai-badge">🤖 Win Prob: {c.aiPrediction.win_probability}</span>
+                          <span className="ld-ai-badge">🤖 Win Prob: {c.aiPrediction.win_probability}%</span>
                         )}
                         <div className="ld-hearing-box">
                           📅 Next Hearing: <strong>{c.next_hearing_date || "Not set"}</strong>

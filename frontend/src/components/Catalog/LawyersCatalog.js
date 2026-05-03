@@ -210,6 +210,11 @@ export default function LawyersCatalog() {
                     )}
                     <div className="cat-advocate-id">
                       Advocate ID: <strong>{lawyer.advocateNumber || "N/A"}</strong>
+                      {lawyer.registrationDate && (
+                        <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: 2 }}>
+                          Reg. Date: <strong>{new Date(lawyer.registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>
+                        </div>
+                      )}
                     </div>
                   </div>
 

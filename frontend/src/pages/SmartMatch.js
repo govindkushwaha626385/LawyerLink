@@ -229,6 +229,9 @@ export default function SmartMatch() {
                         <p className="sm-cat">{l.category || "General Practice"}</p>
                         <p className="sm-meta">⏱️ {l.experience || 0} years experience</p>
                         <p className="sm-meta">📍 {l.address?.split(",")[0] || "India"}</p>
+                        {l.registrationDate && (
+                          <p className="sm-meta">📅 Reg: {new Date(l.registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                        )}
                         {l.rating > 0 && <p className="sm-meta">⭐ {l.rating}/5 rating</p>}
                         {l.reason && <div className="sm-reason">"{l.reason}"</div>}
                         {l.strengths?.length > 0 && (

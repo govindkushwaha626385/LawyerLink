@@ -1,6 +1,6 @@
 // ✅ src/components/Lawyer/CaseDetails.js — full tabbed interface
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import axios from "axios";
@@ -19,7 +19,8 @@ export default function CaseDetails() {
   const [recommendedCases, setRecommendedCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recLoading, setRecLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const location = useLocation();
+  const [isEditing, setIsEditing] = useState(location.state?.editMode || false);
   const [updatedData, setUpdatedData] = useState({});
   const [selectedJudgment, setSelectedJudgment] = useState(null);
   const [activeTab, setActiveTab] = useState("Overview");
@@ -152,6 +153,7 @@ export default function CaseDetails() {
         .cd-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: #1a2744; margin-bottom: 4px; }
         .cd-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; margin: 18px 0; }
         @media (max-width: 600px) { .cd-info-grid { grid-template-columns: 1fr; } .cd-hero-body { padding: 18px; } }
+        .cd-priority-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 50px; padding: 3px 12px; font-size: 0.73rem; font-weight: 700; }
         .cd-info-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; font-weight: 600; margin-bottom: 2px; }
         .cd-info-value { font-size: 0.88rem; font-weight: 600; color: #1a2744; }
         .cd-status-badge { display: inline-flex; border-radius: 50px; padding: 4px 14px; font-size: 0.78rem; font-weight: 700; }
@@ -246,6 +248,54 @@ export default function CaseDetails() {
                 <div><p className="cd-info-label">Advocate Number</p><p className="cd-info-value">{caseData.advocateNumber}</p></div>
                 <div><p className="cd-info-label">Client</p><p className="cd-info-value">{caseData.clientName} · {caseData.clientEmail}</p></div>
                 <div><p className="cd-info-label">Category</p><p className="cd-info-value">{caseData.category}</p></div>
+                {/* New fields */}
+                <div><p className="cd-info-label">Court</p>
+                  {isEditing ? <input name="courtName" className="cd-edit-input" value={updatedData.courtName || ""} onChange={handleChange} placeholder="Court name" /> : <p className="cd-info-value">{caseData.courtName || "—"}</p>}
+                </div>
+                <div><p className="cd-info-label">Case Stage</p>
+                  {isEditing ? (
+                    <select name="stage" className="cd-edit-input" value={updatedData.stage || ""} onChange={handleChange}>
+                      <option value="">Select</option>
+                      {["Filing","Arguments","Evidence","Judgment","Disposal","Appeal"].map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  ) : <p className="cd-info-value">{caseData.stage || "—"}</p>}
+                </div>
+                <div><p className="cd-info-label">Priority</p>
+                  {isEditing ? (
+                    <select name="priority" className="cd-edit-input" value={updatedData.priority || ""} onChange={handleChange}>
+                      <option value="">Select</option>
+                      <option value="Low">🟢 Low</option>
+                      <option value="Medium">🟡 Medium</option>
+                      <option value="High">🟠 High</option>
+                      <option value="Urgent">🔴 Urgent</option>
+                    </select>
+                  ) : (
+                    <p className="cd-info-value">
+                      {caseData.priority === "Urgent" && <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Urgent</span>}
+                      {caseData.priority === "High" && <span style={{ color: "#d97706", fontWeight: 700 }}>🟠 High</span>}
+                      {caseData.priority === "Medium" && <span style={{ color: "#ca8a04", fontWeight: 700 }}>🟡 Medium</span>}
+                      {caseData.priority === "Low" && <span style={{ color: "#16a34a", fontWeight: 700 }}>🟢 Low</span>}
+                      {!caseData.priority && "—"}
+                    </p>
+                  )}
+                </div>
+                <div><p className="cd-info-label">Case Filing Date</p>
+                  {isEditing ? <input type="date" name="filingDate" className="cd-edit-input" value={updatedData.filingDate || ""} onChange={handleChange} /> : <p className="cd-info-value">{caseData.filingDate || "—"}</p>}
+                </div>
+                <div><p className="cd-info-label">Opposing Party</p>
+                  {isEditing ? <input name="opposingParty" className="cd-edit-input" value={updatedData.opposingParty || ""} onChange={handleChange} placeholder="Opposing party name" /> : <p className="cd-info-value">{caseData.opposingParty || "—"}</p>}
+                </div>
+                <div><p className="cd-info-label">Opposing Counsel</p>
+                  {isEditing ? <input name="opposingCounsel" className="cd-edit-input" value={updatedData.opposingCounsel || ""} onChange={handleChange} placeholder="Opposing lawyer" /> : <p className="cd-info-value">{caseData.opposingCounsel || "—"}</p>}
+                </div>
+                <div><p className="cd-info-label">IPC / BNS Sections</p>
+                  {isEditing ? <input name="ipcSections" className="cd-edit-input" value={updatedData.ipcSections || ""} onChange={handleChange} placeholder="e.g. IPC 302" /> : <p className="cd-info-value">{caseData.ipcSections || "—"}</p>}
+                </div>
+                {(caseData.firNumber || isEditing) && (
+                  <div><p className="cd-info-label">FIR Number</p>
+                    {isEditing ? <input name="firNumber" className="cd-edit-input" value={updatedData.firNumber || ""} onChange={handleChange} placeholder="FIR/2024/0123" /> : <p className="cd-info-value">{caseData.firNumber || "—"}</p>}
+                  </div>
+                )}
               </div>
 
               <div className="cd-hearing">

@@ -5,7 +5,7 @@ import { doc, getDoc, updateDoc, collection, addDoc, getDocs, orderBy, query } f
 import { db } from "../firebase";
 
 const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
-const GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 async function analyzeCaseWithAI(prompt) {
   const res = await fetch(GROQ_URL, {
@@ -38,7 +38,7 @@ Be analytical, specific, and reference actual Indian law (IPC, CPC, CrPC, BNS, e
 
 function buildPrompt(c) {
   const docs = (c.documents || []).map((d, i) => `${i + 1}. ${d.name || d.fileName || "Document"} (${d.type || "file"})`).join("\n") || "None";
-  const notes = (c.hearingNotes || []).map((n, i) => `${i + 1}. ${n}`).join("\n") || "None";
+  const notes = (c.hearingNotes || []).map((n, i) => `${i + 1}. ${typeof n === "string" ? n : n.note || ""}`).join("\n") || "None";
   const events = (c.events || []).map(e => `- [${e.type || "event"}] ${e.description || e.text || ""} (${e.date || ""})`).join("\n") || "None";
 
   return `Analyze this Indian legal case comprehensively and return a JSON object with EXACTLY this structure:
@@ -67,16 +67,24 @@ function buildPrompt(c) {
 }
 
 CASE DATA:
-Title: ${c.title || "—"}
-Case ID: ${c.case_id || "—"}
-Category: ${c.category || "—"}
-Status: ${c.status || "—"}
-Description: ${c.description || "Not provided"}
-Client: ${c.clientName || "—"} (${c.clientEmail || "—"})
-Lawyer: ${c.lawyerName || "—"}
-Next Hearing: ${c.next_hearing_date || "Not set"}
-Created: ${c.date || "—"}
-Advocate Number: ${c.advocateNumber || "—"}
+Title:              ${c.title || "—"}
+Case ID:            ${c.case_id || "—"}
+Category:           ${c.category || "—"}
+Status:             ${c.status || "—"}
+Case Stage:         ${c.stage || "—"}
+Priority:           ${c.priority || "—"}
+Description:        ${c.description || "Not provided"}
+Client:             ${c.clientName || "—"} (${c.clientEmail || "—"})
+Lawyer:             ${c.lawyerName || "—"}
+Next Hearing:       ${c.next_hearing_date || "Not set"}
+Case Filing Date:   ${c.filingDate || "—"}
+Court:              ${c.courtName || "—"}
+IPC / BNS Sections: ${c.ipcSections || "Not specified"}
+FIR Number:         ${c.firNumber || "N/A"}
+Opposing Party:     ${c.opposingParty || "—"}
+Opposing Counsel:   ${c.opposingCounsel || "Not known"}
+Advocate Number:    ${c.advocateNumber || "—"}
+Created:            ${c.date || "—"}
 
 DOCUMENTS (${(c.documents || []).length} total):
 ${docs}
@@ -108,10 +116,10 @@ function GaugeBar({ label, value, color }) {
 
 function VerdictOrb({ verdict, probability }) {
   const map = {
-    "Win":         { color: "#16a34a", bg: "#dcfce7", icon: "🏆" },
+    "Win": { color: "#16a34a", bg: "#dcfce7", icon: "🏆" },
     "Partial Win": { color: "#d97706", bg: "#fef3c7", icon: "⚖️" },
-    "Settle":      { color: "#2563eb", bg: "#dbeafe", icon: "🤝" },
-    "Dismiss":     { color: "#dc2626", bg: "#fee2e2", icon: "❌" },
+    "Settle": { color: "#2563eb", bg: "#dbeafe", icon: "🤝" },
+    "Dismiss": { color: "#dc2626", bg: "#fee2e2", icon: "❌" },
   };
   const v = map[verdict] || map["Settle"];
   return (
@@ -175,14 +183,14 @@ function ListItems({ items, color = "#1a2744", icon = "•" }) {
 }
 
 export default function CasePredictor() {
-  const { id }      = useParams();
-  const navigate    = useNavigate();
-  const [caseData, setCaseData]   = useState(null);
-  const [analysis, setAnalysis]   = useState(null);
-  const [loading, setLoading]     = useState(false);
-  const [fetching, setFetching]   = useState(true);
-  const [error, setError]         = useState("");
-  const [history, setHistory]     = useState([]); // prediction history from Firestore
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [caseData, setCaseData] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [error, setError] = useState("");
+  const [history, setHistory] = useState([]); // prediction history from Firestore
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
@@ -214,11 +222,11 @@ export default function CasePredictor() {
         });
         await updateDoc(doc(db, "cases", id), {
           aiPrediction: {
-            verdict_prediction:  result.verdict_prediction,
-            win_probability:     result.win_probability,
-            confidence_level:    result.confidence_level,
-            case_strength:       result.case_strength,
-            analyzedAt:          new Date().toISOString(),
+            verdict_prediction: result.verdict_prediction,
+            win_probability: result.win_probability,
+            confidence_level: result.confidence_level,
+            case_strength: result.case_strength,
+            analyzedAt: new Date().toISOString(),
           },
         });
         // Refresh history
@@ -250,12 +258,12 @@ export default function CasePredictor() {
       <tr><td><strong>Case Strength</strong></td><td>${analysis.case_strength}%</td></tr>
       <tr><td><strong>Duration</strong></td><td>${analysis.estimated_duration}</td></tr></table>
       <h2>Summary</h2><p>${analysis.summary}</p>
-      <h2>Key Strengths</h2><ul>${(analysis.key_strengths||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
-      <h2>Key Risks</h2><ul>${(analysis.key_risks||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
-      <h2>Opposing Arguments</h2><ul>${(analysis.opposing_arguments||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
-      <h2>Counter Strategies</h2><ul>${(analysis.counter_strategies||[]).map(s=>`<li>${s}</li>`).join("")}</ul>
-      <h2>Applicable Laws</h2><p>${(analysis.applicable_laws||[]).join(" · ")}</p>
-      <h2>Recommended Actions</h2><ol>${(analysis.recommended_actions||[]).map(s=>`<li>${s}</li>`).join("")}</ol>
+      <h2>Key Strengths</h2><ul>${(analysis.key_strengths || []).map(s => `<li>${s}</li>`).join("")}</ul>
+      <h2>Key Risks</h2><ul>${(analysis.key_risks || []).map(s => `<li>${s}</li>`).join("")}</ul>
+      <h2>Opposing Arguments</h2><ul>${(analysis.opposing_arguments || []).map(s => `<li>${s}</li>`).join("")}</ul>
+      <h2>Counter Strategies</h2><ul>${(analysis.counter_strategies || []).map(s => `<li>${s}</li>`).join("")}</ul>
+      <h2>Applicable Laws</h2><p>${(analysis.applicable_laws || []).join(" · ")}</p>
+      <h2>Recommended Actions</h2><ol>${(analysis.recommended_actions || []).map(s => `<li>${s}</li>`).join("")}</ol>
       <h2>Settlement Advice</h2><p>${analysis.settlement_advice}</p>
       <h2>Critical Next Step</h2><p><strong>${analysis.critical_next_step}</strong></p>
       <hr><p style="font-size:11px;color:#9ca3af">This report is AI-generated and for informational purposes only. Not legal advice. © LawyerLink</p>
@@ -426,9 +434,9 @@ export default function CasePredictor() {
                         {analysis.confidence_level} Confidence
                       </span>
                     </div>
-                    <GaugeBar label="Overall Case Strength"  value={analysis.case_strength}     color="#1a2744" />
-                    <GaugeBar label="Evidence Strength"      value={analysis.evidence_strength}  color="#c9a84c" />
-                    <GaugeBar label="Legal Basis Strength"   value={analysis.legal_basis_strength} color="#4f46e5" />
+                    <GaugeBar label="Overall Case Strength" value={analysis.case_strength} color="#1a2744" />
+                    <GaugeBar label="Evidence Strength" value={analysis.evidence_strength} color="#c9a84c" />
+                    <GaugeBar label="Legal Basis Strength" value={analysis.legal_basis_strength} color="#4f46e5" />
                     <div style={{ marginTop: 16, fontSize: "0.82rem", color: "#6b7280" }}>
                       ⏱️ Estimated Duration: <strong style={{ color: "#1a2744" }}>{analysis.estimated_duration}</strong>
                     </div>

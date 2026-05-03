@@ -37,6 +37,7 @@ import AdminPanel from "./pages/AdminPanel";
 import CasePredictor from "./pages/CasePredictor";
 import DocumentAnalyzer from "./pages/DocumentAnalyzer";
 import HearingCalendar from "./pages/HearingCalendar";
+import SeedMasterData from "./pages/SeedMasterData";
 
 // --- Scroll to Top Component ---
 function ScrollToTop() {
@@ -153,7 +154,9 @@ function AppLayout() {
             }
           />
 
-          {/* --- New Feature Routes --- */}
+          {/* --- Seed / Admin Utility --- */}
+          <Route path="/seed-master" element={<SeedMasterData />} />
+
           <Route path="/smart-match" element={<SmartMatch />} />
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
           <Route

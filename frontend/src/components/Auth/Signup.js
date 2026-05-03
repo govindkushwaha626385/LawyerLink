@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 
 // ── Cloudinary config (same as CaseDocuments) ──
@@ -31,6 +31,7 @@ export default function Signup() {
   const [formData, setFormData]         = useState({
     fullName: "", phone: "", address: "",
     experience: "", category: "", advocateNumber: "",
+    registrationDate: "",
   });
 
   const avatarInputRef = useRef(null);
@@ -55,6 +56,53 @@ export default function Signup() {
     if (!email || !password) { setError("Please enter email and password."); return; }
     setLoading(true); setError("");
     try {
+      // ── Validate Advocate Registration (lawyer only) ──────────────
+      if (isLawyer) {
+        if (!formData.advocateNumber || !formData.registrationDate) {
+          setError("Advocate Reg. Number and Registration Date are required.");
+          setLoading(false); return;
+        }
+
+        /**
+         * Normalize any date string to YYYY-MM-DD.
+         * HTML <input type="date"> always returns YYYY-MM-DD internally,
+         * but some browsers (Safari/mobile) may surface DD/MM/YYYY via .value.
+         * We handle both formats so the comparison is always reliable.
+         */
+        const toISO = (dateStr) => {
+          if (!dateStr) return "";
+          const s = dateStr.trim();
+          // Already YYYY-MM-DD
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+          // DD/MM/YYYY  →  YYYY-MM-DD
+          const parts = s.split("/");
+          if (parts.length === 3) {
+            const [d, m, y] = parts;
+            return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+          }
+          return s;
+        };
+
+        const regNum       = formData.advocateNumber.trim().toUpperCase();
+        const regDateISO   = toISO(formData.registrationDate); // normalize input
+
+        const advSnap = await getDocs(
+          query(collection(db, "advocates_master"),
+            where("advocate_registration_number", "==", regNum))
+        );
+        if (advSnap.empty) {
+          setError("❌ Advocate Registration Number not found in our records. Please check and try again.");
+          setLoading(false); return;
+        }
+        const advData       = advSnap.docs[0].data();
+        const storedDateISO = toISO(advData.registration_date); // normalize DB value
+
+        if (storedDateISO !== regDateISO) {
+          setError(`❌ Registration Date does not match our records for this Advocate Number. (Expected: ${storedDateISO})`);
+          setLoading(false); return;
+        }
+      }
+
       // Upload avatar first (optional)
       let imageUrl = "";
       if (avatarFile) imageUrl = await uploadAvatar(avatarFile);
@@ -73,12 +121,13 @@ export default function Signup() {
 
       if (isLawyer) {
         Object.assign(userData, {
-          experience:     formData.experience     || "",
-          category:       formData.category       || "",
-          advocateNumber: formData.advocateNumber || "",
-          casesHandled:   0,
-          rating:         0,
-          verified:       false,
+          experience:       formData.experience       || "",
+          category:         formData.category         || "",
+          advocateNumber:   formData.advocateNumber.trim().toUpperCase(),
+          registrationDate: formData.registrationDate || "",
+          casesHandled:     0,
+          rating:           0,
+          verified:         true, // verified because they passed master data check
         });
       }
 
@@ -306,10 +355,19 @@ export default function Signup() {
                     name="experience" value={formData.experience} onChange={handleChange} />
                 </div>
                 <div className="sw-field">
-                  <label className="sw-label">Advocate Reg. Number</label>
-                  <input className="sw-input" type="text" placeholder="e.g. A12345XYZ"
+                  <label className="sw-label">Advocate Reg. Number <span style={{color:"#dc2626"}}>*</span></label>
+                  <input className="sw-input" type="text" placeholder="e.g. MP/1024/2015"
                     name="advocateNumber" value={formData.advocateNumber} onChange={handleChange} />
                 </div>
+              </div>
+
+              <div className="sw-field">
+                <label className="sw-label">Bar Council Registration Date <span style={{color:"#dc2626"}}>*</span></label>
+                <input className="sw-input" type="date" name="registrationDate"
+                  value={formData.registrationDate} onChange={handleChange} />
+                <span style={{ fontSize: ".7rem", color: "#6b7280", marginTop: 4 }}>
+                  Must match the Bar Council records exactly.
+                </span>
               </div>
 
               <div className="sw-field">

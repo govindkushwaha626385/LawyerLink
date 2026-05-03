@@ -197,10 +197,16 @@ export default function ProfilePage() {
                         <input className="pr-input" type="number" name="experience" value={form.experience || ""} onChange={handleChange} placeholder="e.g. 5" />
                       </div>
                       <div>
-                        <label className="pr-label">Advocate Number</label>
-                        <input className="pr-input" name="advocateNumber" value={form.advocateNumber || ""} onChange={handleChange} placeholder="A12345XYZ" />
+                        <label className="pr-label">Advocate Number (cannot be changed)</label>
+                        <input className="pr-input" value={form.advocateNumber || ""} disabled style={{ opacity: 0.6, cursor: "not-allowed" }} />
                       </div>
                     </div>
+                    {form.registrationDate && (
+                      <div>
+                        <label className="pr-label">Bar Council Registration Date (cannot be changed)</label>
+                        <input className="pr-input" value={new Date(form.registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })} disabled style={{ opacity: 0.6, cursor: "not-allowed" }} />
+                      </div>
+                    )}
                     <div>
                       <label className="pr-label">Specialization / Category</label>
                       <select className="pr-input" name="category" value={form.category || ""} onChange={handleChange}>
@@ -245,6 +251,15 @@ export default function ProfilePage() {
                       <InfoRow label="Advocate Number" value={userData.advocateNumber} />
                       <InfoRow label="Specialization" value={userData.category} />
                       <InfoRow label="Cases Handled" value={userData.casesHandled || "0"} />
+                      {userData.registrationDate && (
+                        <InfoRow
+                          label="Bar Council Registration Date"
+                          value={new Date(userData.registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}
+                        />
+                      )}
+                      {userData.verified && (
+                        <InfoRow label="Verification Status" value="✅ Verified by Bar Council" />
+                      )}
                     </div>
                   </>
                 )}

@@ -335,15 +335,35 @@ export default function LitigantDashboard() {
                       <div className="lit-case-bar" style={{ background: col.bar }} />
                       <div className="lit-case-body">
                         <h4 className="lit-case-title">{c.title || "Untitled Case"}</h4>
+                        {/* Priority + Stage row */}
+                        {(c.priority || c.stage) && (
+                          <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                            {c.priority && (
+                              <span style={{
+                                fontSize: "0.68rem", fontWeight: 700, borderRadius: 50, padding: "2px 9px",
+                                background: c.priority==="Urgent"?"#fee2e2":c.priority==="High"?"#fef3c7":c.priority==="Medium"?"#fefce8":"#dcfce7",
+                                color: c.priority==="Urgent"?"#991b1b":c.priority==="High"?"#92400e":c.priority==="Medium"?"#854d0e":"#166534"
+                              }}>
+                                {c.priority==="Urgent"?"🔴":c.priority==="High"?"🟠":c.priority==="Medium"?"🟡":"🟢"} {c.priority}
+                              </span>
+                            )}
+                            {c.stage && (
+                              <span style={{ fontSize: "0.68rem", fontWeight: 600, borderRadius: 50, padding: "2px 9px", background: "#eef2ff", color: "#3730a3" }}>
+                                {c.stage}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <p className="lit-info-row">🧾 Case ID: <strong>{c.case_id}</strong></p>
                         <p className="lit-info-row">🏷️ {c.category || "Not specified"}</p>
-                        <p className="lit-info-row">🪪 Advocate No: {c.advocateNumber || "N/A"}</p>
+                        {c.courtName && <p className="lit-info-row">🏛️ {c.courtName}</p>}
+                        {c.opposingParty && <p className="lit-info-row">⚔️ vs {c.opposingParty}</p>}
                         <span className="lit-status-badge" style={{ background: col.bg, color: col.text }}>
                           {c.status || "In Progress"}
                         </span>
                         {c.aiPrediction && (
                           <span className="lit-status-badge" style={{ background: "rgba(201,168,76,0.15)", color: "#b48b2d", marginLeft: 8, border: "1px solid rgba(201,168,76,0.3)" }}>
-                            🤖 Win Prob: {c.aiPrediction.win_probability}
+                            🤖 Win Prob: {c.aiPrediction.win_probability}%
                           </span>
                         )}
                         <div className="lit-hearing-box">

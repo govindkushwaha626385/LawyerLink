@@ -141,7 +141,22 @@ export default function LitigantCaseDetails() {
               <div className="lcd-info-grid">
                 <div><p className="lcd-info-label">Category</p><p className="lcd-info-value">{caseData.category || "N/A"}</p></div>
                 <div><p className="lcd-info-label">Advocate Number</p><p className="lcd-info-value">{caseData.advocateNumber || "N/A"}</p></div>
-                <div><p className="lcd-info-label">Stage</p><p className="lcd-info-value">{caseData.stage || "In Progress"}</p></div>
+                <div><p className="lcd-info-label">Stage</p><p className="lcd-info-value">{caseData.stage || "—"}</p></div>
+                <div><p className="lcd-info-label">Priority</p>
+                  <p className="lcd-info-value">
+                    {caseData.priority === "Urgent" && <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Urgent</span>}
+                    {caseData.priority === "High" && <span style={{ color: "#d97706", fontWeight: 700 }}>🟠 High</span>}
+                    {caseData.priority === "Medium" && <span style={{ color: "#ca8a04", fontWeight: 700 }}>🟡 Medium</span>}
+                    {caseData.priority === "Low" && <span style={{ color: "#16a34a", fontWeight: 700 }}>🟢 Low</span>}
+                    {!caseData.priority && "—"}
+                  </p>
+                </div>
+                <div><p className="lcd-info-label">Court</p><p className="lcd-info-value">{caseData.courtName || "—"}</p></div>
+                <div><p className="lcd-info-label">Filing Date</p><p className="lcd-info-value">{caseData.filingDate || "—"}</p></div>
+                <div><p className="lcd-info-label">Opposing Party</p><p className="lcd-info-value">{caseData.opposingParty || "—"}</p></div>
+                <div><p className="lcd-info-label">Opposing Counsel</p><p className="lcd-info-value">{caseData.opposingCounsel || "—"}</p></div>
+                {caseData.ipcSections && <div><p className="lcd-info-label">IPC / BNS Sections</p><p className="lcd-info-value">{caseData.ipcSections}</p></div>}
+                {caseData.firNumber && <div><p className="lcd-info-label">FIR Number</p><p className="lcd-info-value">{caseData.firNumber}</p></div>}
                 <div><p className="lcd-info-label">Linked On</p><p className="lcd-info-value">{createdAt}</p></div>
               </div>
 
