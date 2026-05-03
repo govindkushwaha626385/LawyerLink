@@ -1,10 +1,15 @@
 import React, { useState, useRef } from "react";
+import emailjs from "@emailjs/browser";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 
-// ── Cloudinary config (same as CaseDocuments) ──
+// ── EmailJS config ───────────────────────────────────
+const EJS_SERVICE  = "service_2tvrzjy";
+const EJS_TEMPLATE = "template_lrtrlbm";
+const EJS_PUBLIC   = "iiTZNMe5xBgrLmn2L";
+
 const CLOUD_NAME    = "dzfoal3fg";
 const UPLOAD_PRESET = "lawyerlink_documents";
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
@@ -111,28 +116,21 @@ export default function Signup() {
           setLoading(false); return;
         }
 
-        // Send OTP
+        // ── Generate OTP & send via EmailJS (no backend needed) ──
         setLoadingText("Sending OTP to your email...");
-        const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
-        
-        // Add a 15 second timeout to prevent infinite hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-        const res = await fetch(`${BACKEND}/send-otp-email/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: advData.email_id }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        const data = await res.json();
-        if (data.status === "sent") {
-          setExpectedOTP(data.otp);
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        try {
+          await emailjs.send(
+            EJS_SERVICE,
+            EJS_TEMPLATE,
+            { otp, to_email: advData.email_id },
+            EJS_PUBLIC
+          );
+          setExpectedOTP(otp);
           setShowOTP(true);
-        } else {
-          setError("❌ Failed to send OTP: " + data.error);
+        } catch (ejsErr) {
+          console.error("EmailJS error:", ejsErr);
+          setError("❌ Failed to send OTP. Please try again.");
         }
         setLoading(false);
         return; // wait for OTP verification
@@ -141,11 +139,7 @@ export default function Signup() {
       // If Litigant, proceed directly
       await finalizeSignup();
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setError("❌ Server took too long to respond. Please try again later.");
-      } else {
-        setError(err.message.replace("Firebase: ", "").replace(" (auth/", " (").replace(/\.$/, ""));
-      }
+      setError(err.message.replace("Firebase: ", "").replace(" (auth/", " (").replace(/\.$/, ""));
       setLoading(false);
     }
   };
