@@ -97,14 +97,15 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
 
       // ── Validate FIR Number (if provided) ──────────────────────
       if (caseData.firNumber && caseData.firNumber.trim()) {
+        const normalizedFir = caseData.firNumber.trim().toUpperCase();
         const firQ = query(
           collection(db, "fir_numbers"),
-          where("fir_number", "==", caseData.firNumber.trim()),
+          where("fir_number", "==", normalizedFir),
           limit(1)
         );
         const firSnap = await getDocs(firQ);
         if (firSnap.empty) {
-          setFormError(`❌ FIR Number "${caseData.firNumber.trim()}" is not found in our records. Please verify and try again.`);
+          setFormError(`❌ FIR Number "${normalizedFir}" is not found in our records. Please verify and try again.`);
           setLoading(false);
           return;
         }

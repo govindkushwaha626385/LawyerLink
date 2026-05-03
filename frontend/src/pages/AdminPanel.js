@@ -8,10 +8,11 @@ import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import AdminAnalytics from "../components/Admin/AdminAnalytics";
+import AdminMasterData from "../components/Admin/AdminMasterData";
 
 const ADMIN_EMAILS = ["govindkushwahabusiness@gmail.com"]; // ← add more admin emails here
 
-const TABS = ["Overview", "Analytics", "Lawyers", "Litigants", "Cases", "Reviews"];
+const TABS = ["Overview", "Analytics", "Lawyers", "Litigants", "Cases", "Reviews", "Master Data"];
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab]     = useState("Overview");
@@ -739,6 +740,11 @@ export default function AdminPanel() {
                 </table>
               </div>
             </div>
+          )}
+
+          {/* ════════════════════════════════ MASTER DATA ════════════════════════════════ */}
+          {activeTab === "Master Data" && (
+            <AdminMasterData />
           )}
 
         </div>
