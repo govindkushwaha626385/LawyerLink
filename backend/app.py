@@ -734,6 +734,6 @@ def send_otp_email(req: OTPEmailRequest):
         except Exception as e:
             print(f"❌ OTP email failed: {e}")
 
-    threading.Thread(target=dispatch_email, daemon=True).start()
+    threading.Thread(target=dispatch_email, daemon=False).start()
     return {"status": "sent", "otp": otp}
 
