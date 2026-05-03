@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModel
 from sentence_transformers import SentenceTransformer
@@ -715,8 +715,9 @@ def build_otp_email_html(otp: str) -> str:
     """
 
 @app.post("/send-otp-email/")
-def send_otp_email(req: OTPEmailRequest, background_tasks: BackgroundTasks):
-    """Generate OTP, return it immediately, and send email in the background."""
+def send_otp_email(req: OTPEmailRequest):
+    """Generate OTP instantly, then dispatch email in a background thread."""
+    import threading
     otp = str(random.randint(100000, 999999))
 
     def dispatch_email():
@@ -729,10 +730,10 @@ def send_otp_email(req: OTPEmailRequest, background_tasks: BackgroundTasks):
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
                 server.login(EMAIL_SENDER, EMAIL_PASSWORD)
                 server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
-            print(f"✅ OTP email dispatched to {req.email}")
+            print(f"✅ OTP email sent to {req.email}")
         except Exception as e:
-            print(f"❌ OTP email dispatch failed: {e}")
+            print(f"❌ OTP email failed: {e}")
 
-    background_tasks.add_task(dispatch_email)
+    threading.Thread(target=dispatch_email, daemon=True).start()
     return {"status": "sent", "otp": otp}
 
