@@ -114,11 +114,19 @@ export default function Signup() {
         // Send OTP
         setLoadingText("Sending OTP to your email...");
         const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
+        
+        // Add a 15 second timeout to prevent infinite hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         const res = await fetch(`${BACKEND}/send-otp-email/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: advData.email_id })
+          body: JSON.stringify({ email: advData.email_id }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
+        
         const data = await res.json();
         if (data.status === "sent") {
           setExpectedOTP(data.otp);
@@ -133,7 +141,11 @@ export default function Signup() {
       // If Litigant, proceed directly
       await finalizeSignup();
     } catch (err) {
-      setError(err.message.replace("Firebase: ", "").replace(" (auth/", " (").replace(/\.$/, ""));
+      if (err.name === 'AbortError') {
+        setError("❌ Server took too long to respond. Please try again later.");
+      } else {
+        setError(err.message.replace("Firebase: ", "").replace(" (auth/", " (").replace(/\.$/, ""));
+      }
       setLoading(false);
     }
   };
