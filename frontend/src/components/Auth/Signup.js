@@ -25,6 +25,7 @@ export default function Signup() {
   const [password, setPassword]         = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
+  const [loadingText, setLoadingText]   = useState("Creating account...");
   const [error, setError]               = useState("");
   const [avatarFile, setAvatarFile]     = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -57,7 +58,7 @@ export default function Signup() {
 
   const handleSignup = async () => {
     if (!email || !password) { setError("Please enter email and password."); return; }
-    setLoading(true); setError("");
+    setLoading(true); setLoadingText("Verifying Advocate Data..."); setError("");
     try {
       // ── Validate Advocate Registration (lawyer only) ──────────────
       if (isLawyer) {
@@ -111,6 +112,7 @@ export default function Signup() {
         }
 
         // Send OTP
+        setLoadingText("Sending OTP to your email...");
         const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
         const res = await fetch(`${BACKEND}/send-otp-email/`, {
           method: "POST",
@@ -148,6 +150,7 @@ export default function Signup() {
   };
 
   const finalizeSignup = async () => {
+    setLoadingText("Creating account...");
     try {
       // Upload avatar first (optional)
       let imageUrl = "";
@@ -431,7 +434,7 @@ export default function Signup() {
 
           <button className="sw-btn" onClick={handleSignup} disabled={loading}>
             {loading
-              ? <><span className="spinner-border spinner-border-sm" /> Creating account…</>
+              ? <><span className="spinner-border spinner-border-sm" /> {loadingText}</>
               : "Create Account →"}
           </button>
 
