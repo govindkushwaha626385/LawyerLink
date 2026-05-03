@@ -117,7 +117,7 @@ export default function Signup() {
         
         // Add a 15 second timeout to prevent infinite hanging
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         const res = await fetch(`${BACKEND}/send-otp-email/`, {
           method: "POST",

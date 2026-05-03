@@ -716,24 +716,20 @@ def build_otp_email_html(otp: str) -> str:
 
 @app.post("/send-otp-email/")
 def send_otp_email(req: OTPEmailRequest):
-    """Generate OTP instantly, then dispatch email in a background thread."""
-    import threading
+    """Generate OTP and send verification email synchronously."""
     otp = str(random.randint(100000, 999999))
-
-    def dispatch_email():
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = f"{otp} is your LawyerLink Verification OTP"
-            msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
-            msg["To"]      = req.email
-            msg.attach(MIMEText(build_otp_email_html(otp), "html"))
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-                server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
-            print(f"✅ OTP email sent to {req.email}")
-        except Exception as e:
-            print(f"❌ OTP email failed: {e}")
-
-    threading.Thread(target=dispatch_email, daemon=False).start()
-    return {"status": "sent", "otp": otp}
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"{otp} is your LawyerLink Verification OTP"
+        msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
+        msg["To"]      = req.email
+        msg.attach(MIMEText(build_otp_email_html(otp), "html"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
+        print(f"✅ OTP email sent to {req.email}")
+        return {"status": "sent", "otp": otp}
+    except Exception as e:
+        print(f"❌ OTP email failed: {e}")
+        return {"status": "failed", "error": str(e)}
 
