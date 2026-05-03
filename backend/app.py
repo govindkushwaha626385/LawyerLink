@@ -724,7 +724,9 @@ def send_otp_email(req: OTPEmailRequest):
         msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
         msg["To"]      = req.email
         msg.attach(MIMEText(build_otp_email_html(otp), "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, req.email, msg.as_string())
         print(f"✅ OTP email sent to {req.email}")
