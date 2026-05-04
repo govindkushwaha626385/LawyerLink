@@ -216,7 +216,7 @@ export default function DocAnalyzer({ fileName, fileUrl, onClose }) {
           <div className="da-body">
 
             {/* Input */}
-            {!result && (
+            {!result && !loading && !fileUrl && (
               <div>
                 <p style={{ fontSize: "0.83rem", color: "#374151", fontWeight: 600, marginBottom: 6 }}>
                   Option 1: Upload a document (PDF, Image, Text)
