@@ -116,7 +116,11 @@ export default function DocAnalyzer({ fileName, fileUrl, onClose }) {
       const autoFetchAndAnalyze = async () => {
         setLoading(true); setError(""); setResult(null);
         try {
-          const response = await fetch(fileUrl);
+          // Cloudinary often blocks direct CORS fetching for raw PDF files, but allows images.
+          // We use a safe, free proxy to bypass this for the document analyzer.
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(fileUrl)}`;
+          const response = await fetch(proxyUrl);
+          
           if (!response.ok) throw new Error("Failed to fetch document from cloud.");
           const blob = await response.blob();
           
