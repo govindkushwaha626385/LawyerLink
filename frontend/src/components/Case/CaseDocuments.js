@@ -21,6 +21,11 @@ const isInlineImage = (type = "") =>
   /^image\/(jpeg|jpg|png|gif|webp|svg)/.test(type);
 
 const getDownloadUrl = (url = "", type = "") => {
+  if (!url) return "";
+  if (isInlineImage(type)) return url;
+  if (url.includes("/upload/")) {
+    return url.replace("/upload/", "/upload/fl_attachment/");
+  }
   return url;
 };
 // ──────────────────────────────────────────────────────────
