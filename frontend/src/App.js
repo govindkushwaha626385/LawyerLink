@@ -145,8 +145,8 @@ function AppLayout() {
             }
           />
 
-          {/* --- Seed / Admin Utility --- */}
-          <Route path="/seed-master" element={<SeedMasterData />} />
+          {/* --- Seed / Admin Utility (Admin-only) --- */}
+          <Route path="/seed-master" element={<AdminRoute><SeedMasterData /></AdminRoute>} />
 
           <Route path="/smart-match" element={<SmartMatch />} />
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
