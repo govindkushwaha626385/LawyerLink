@@ -3,22 +3,22 @@ import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/f
 import { db, auth } from "../../firebase";
 import AddCaseModal from "./AddCaseModal";
 
-const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
+
 
 const STATUS_STYLE = {
-  pending:  { bg: "#fef3c7", color: "#92400e", label: "⏳ Pending" },
+  pending: { bg: "#fef3c7", color: "#92400e", label: "⏳ Pending" },
   accepted: { bg: "#dcfce7", color: "#16a34a", label: "✅ Accepted" },
   declined: { bg: "#fee2e2", color: "#dc2626", label: "❌ Declined" },
 };
 
 export default function MyConsultations() {
   const [consultations, setConsultations] = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [selectedId, setSelectedId]       = useState(null);
-  const [reply, setReply]                 = useState("");
-  const [sending, setSending]             = useState(false);
-  const [filterStatus, setFilterStatus]   = useState("all");
-  const [showAddModal, setShowAddModal]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(null);
+  const [reply, setReply] = useState("");
+  const [sending, setSending] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [showAddModal, setShowAddModal] = useState(false);
   const user = auth.currentUser;
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function MyConsultations() {
     );
     const unsub = onSnapshot(q, snap => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      list.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+      list.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
       setConsultations(list);
       setLoading(false);
     }, err => {
@@ -100,39 +100,39 @@ export default function MyConsultations() {
 
       <div className="mc-wrap">
         <div className="mc-toolbar">
-          <span style={{ fontFamily:"'Playfair Display',serif", fontSize:"1rem", fontWeight:700, color:"#1a2744", marginRight:6 }}>📅 Consultations</span>
-          {["all","pending","accepted","declined"].map(s => (
-            <button key={s} className={`mc-filter ${filterStatus===s?"active":""}`} onClick={() => setFilterStatus(s)}>
-              {s === "all" ? `All (${consultations.length})` : STATUS_STYLE[s]?.label + ` (${consultations.filter(c=>c.status===s).length})`}
+          <span style={{ fontFamily: "'Playfair Display',serif", fontSize: "1rem", fontWeight: 700, color: "#1a2744", marginRight: 6 }}>📅 Consultations</span>
+          {["all", "pending", "accepted", "declined"].map(s => (
+            <button key={s} className={`mc-filter ${filterStatus === s ? "active" : ""}`} onClick={() => setFilterStatus(s)}>
+              {s === "all" ? `All (${consultations.length})` : STATUS_STYLE[s]?.label + ` (${consultations.filter(c => c.status === s).length})`}
             </button>
           ))}
         </div>
 
         {filtered.length === 0 ? (
           <div className="mc-empty">
-            <div style={{ fontSize:"2.5rem", marginBottom:12 }}>📅</div>
-            <p style={{ fontWeight:700, color:"#374151", margin:"0 0 4px" }}>No consultations yet</p>
-            <p style={{ fontSize:".82rem" }}>Booking requests from clients will appear here.</p>
+            <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>📅</div>
+            <p style={{ fontWeight: 700, color: "#374151", margin: "0 0 4px" }}>No consultations yet</p>
+            <p style={{ fontSize: ".82rem" }}>Booking requests from clients will appear here.</p>
           </div>
         ) : (
-          <div style={{ display:"grid", gridTemplateColumns: activeSelected ? "1fr 1fr" : "1fr", gap:18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: activeSelected ? "1fr 1fr" : "1fr", gap: 18 }}>
             {/* List */}
-            <div className="mc-grid" style={{ alignContent:"start" }}>
+            <div className="mc-grid" style={{ alignContent: "start" }}>
               {filtered.map(c => {
                 const st = STATUS_STYLE[c.status] || STATUS_STYLE.pending;
                 return (
-                  <div key={c.id} className={`mc-card ${activeSelected?.id===c.id?"active":""}`} onClick={() => { setSelectedId(c.id); setReply(""); }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+                  <div key={c.id} className={`mc-card ${activeSelected?.id === c.id ? "active" : ""}`} onClick={() => { setSelectedId(c.id); setReply(""); }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                       <div>
-                        <p style={{ fontWeight:700, color:"#1a2744", fontSize:".9rem", margin:0 }}>{c.litigantName}</p>
-                        <p style={{ fontSize:".73rem", color:"#6b7280", margin:"2px 0 0" }}>{c.litigantEmail}</p>
+                        <p style={{ fontWeight: 700, color: "#1a2744", fontSize: ".9rem", margin: 0 }}>{c.litigantName}</p>
+                        <p style={{ fontSize: ".73rem", color: "#6b7280", margin: "2px 0 0" }}>{c.litigantEmail}</p>
                       </div>
-                      <span style={{ background:st.bg, color:st.color, borderRadius:50, padding:"2px 10px", fontSize:".68rem", fontWeight:700, flexShrink:0, marginLeft:8 }}>{st.label}</span>
+                      <span style={{ background: st.bg, color: st.color, borderRadius: 50, padding: "2px 10px", fontSize: ".68rem", fontWeight: 700, flexShrink: 0, marginLeft: 8 }}>{st.label}</span>
                     </div>
-                    <p style={{ fontSize:".8rem", color:"#374151", margin:"0 0 8px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{c.message}</p>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                      <span style={{ fontSize:".72rem", color:"#c9a84c", fontWeight:700 }}>📅 {c.preferredDate} {c.preferredTime}</span>
-                      <span style={{ fontSize:".72rem", color:"#9ca3af" }}>{c.caseType}</span>
+                    <p style={{ fontSize: ".8rem", color: "#374151", margin: "0 0 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.message}</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: ".72rem", color: "#c9a84c", fontWeight: 700 }}>📅 {c.preferredDate} {c.preferredTime}</span>
+                      <span style={{ fontSize: ".72rem", color: "#9ca3af" }}>{c.caseType}</span>
                     </div>
                   </div>
                 );
@@ -142,18 +142,18 @@ export default function MyConsultations() {
             {/* Detail Panel */}
             {activeSelected && (
               <div className="mc-detail">
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:18 }}>
-                  <h4 style={{ fontFamily:"'Playfair Display',serif", color:"#1a2744", margin:0, fontSize:"1rem" }}>Consultation Details</h4>
-                  <button onClick={() => setSelectedId(null)} style={{ background:"#f3f4f6", border:"none", borderRadius:50, padding:"4px 12px", fontSize:".75rem", cursor:"pointer", color:"#374151" }}>✕ Close</button>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 18 }}>
+                  <h4 style={{ fontFamily: "'Playfair Display',serif", color: "#1a2744", margin: 0, fontSize: "1rem" }}>Consultation Details</h4>
+                  <button onClick={() => setSelectedId(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 50, padding: "4px 12px", fontSize: ".75rem", cursor: "pointer", color: "#374151" }}>✕ Close</button>
                 </div>
 
                 {[
-                  { l:"Client Name", v: activeSelected.litigantName },
-                  { l:"Email",       v: activeSelected.litigantEmail },
-                  { l:"Phone",       v: activeSelected.litigantPhone || "—" },
-                  { l:"Case Type",   v: activeSelected.caseType || "—" },
-                  { l:"Preferred Date & Time", v: `${activeSelected.preferredDate} ${activeSelected.preferredTime || ""}` },
-                  { l:"Status",      v: STATUS_STYLE[activeSelected.status]?.label || "Pending" },
+                  { l: "Client Name", v: activeSelected.litigantName },
+                  { l: "Email", v: activeSelected.litigantEmail },
+                  { l: "Phone", v: activeSelected.litigantPhone || "—" },
+                  { l: "Case Type", v: activeSelected.caseType || "—" },
+                  { l: "Preferred Date & Time", v: `${activeSelected.preferredDate} ${activeSelected.preferredTime || ""}` },
+                  { l: "Status", v: STATUS_STYLE[activeSelected.status]?.label || "Pending" },
                 ].map(({ l, v }) => (
                   <div key={l}>
                     <p className="mc-label">{l}</p>
@@ -162,8 +162,8 @@ export default function MyConsultations() {
                 ))}
 
                 <p className="mc-label">Client's Initial Message</p>
-                <div style={{ background:"#f8faff", border:"1px solid #e5e7eb", borderRadius:10, padding:"12px 14px", marginBottom:16 }}>
-                  <p style={{ fontSize:".85rem", color:"#374151", lineHeight:1.6, margin:0 }}>{activeSelected.message}</p>
+                <div style={{ background: "#f8faff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+                  <p style={{ fontSize: ".85rem", color: "#374151", lineHeight: 1.6, margin: 0 }}>{activeSelected.message}</p>
                 </div>
 
                 {/* Chat History */}
@@ -178,12 +178,12 @@ export default function MyConsultations() {
                           <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{activeSelected.replyMessage}</p>
                         </div>
                       )}
-                      
+
                       {/* Render real-time messages */}
                       {activeSelected.messages?.map((msg, idx) => {
                         const isLawyer = msg.sender === "lawyer";
                         return (
-                          <div key={idx} style={{ 
+                          <div key={idx} style={{
                             alignSelf: isLawyer ? "flex-end" : "flex-start",
                             background: isLawyer ? "#1a2744" : "#f1f5f9",
                             color: isLawyer ? "white" : "#1e293b",
@@ -203,16 +203,16 @@ export default function MyConsultations() {
 
                 {/* Quick Actions */}
                 {activeSelected.status === "pending" && (
-                  <div style={{ display:"flex", gap:10, marginBottom:14 }}>
-                    <button className="mc-action-btn" style={{ background:"#dcfce7", color:"#16a34a" }} onClick={() => updateStatus(activeSelected.id, "accepted")}>✅ Accept</button>
-                    <button className="mc-action-btn" style={{ background:"#fee2e2", color:"#dc2626" }} onClick={() => updateStatus(activeSelected.id, "declined")}>❌ Decline</button>
+                  <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                    <button className="mc-action-btn" style={{ background: "#dcfce7", color: "#16a34a" }} onClick={() => updateStatus(activeSelected.id, "accepted")}>✅ Accept</button>
+                    <button className="mc-action-btn" style={{ background: "#fee2e2", color: "#dc2626" }} onClick={() => updateStatus(activeSelected.id, "declined")}>❌ Decline</button>
                   </div>
                 )}
-                
+
                 {/* Convert to Case Action */}
                 {activeSelected.status === "accepted" && (
-                  <div style={{ marginBottom:14 }}>
-                    <button className="mc-action-btn" style={{ background:"#e0e7ff", color:"#4338ca", width:"100%" }} onClick={() => setShowAddModal(true)}>
+                  <div style={{ marginBottom: 14 }}>
+                    <button className="mc-action-btn" style={{ background: "#e0e7ff", color: "#4338ca", width: "100%" }} onClick={() => setShowAddModal(true)}>
                       ⚖️ Convert to Case
                     </button>
                   </div>
@@ -233,7 +233,7 @@ export default function MyConsultations() {
 
       {/* Render AddCaseModal if Convert to Case is clicked */}
       {showAddModal && activeSelected && (
-        <AddCaseModal 
+        <AddCaseModal
           onClose={() => setShowAddModal(false)}
           initialData={{
             title: `Case for ${activeSelected.litigantName}`,
