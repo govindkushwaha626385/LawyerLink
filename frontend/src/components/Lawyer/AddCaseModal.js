@@ -161,10 +161,10 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
         );
       }
 
-      // Send case-added email to client using EmailJS (Non-blocking)
+      // Send case-added email to client using EmailJS (Wait for it before reloading)
       try {
         const clientName = usersSnap.empty ? "" : (usersSnap.docs[0].data().fullName || "");
-        emailjs.send(
+        await emailjs.send(
           EJS_SERVICE,
           EJS_TEMPLATE,
           {
@@ -178,9 +178,10 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
             status: caseData.status || "Open",
           },
           EJS_PUBLIC
-        ).catch(err => console.warn("EmailJS case-added error:", err));
+        );
+        console.log("✅ Case-added email sent via EmailJS");
       } catch (emailErr) {
-        console.warn("EmailJS initialization failed:", emailErr);
+        console.warn("EmailJS sending failed, but case was added:", emailErr);
       }
 
       alert(`✅ Case added successfully!\nCase ID: ${generatedCaseId}`);
