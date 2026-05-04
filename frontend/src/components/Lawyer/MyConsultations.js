@@ -64,19 +64,7 @@ export default function MyConsultations() {
         repliedAt: new Date().toISOString(),
       });
 
-      // Email litigant (only send email if we want to notify them)
-      await fetch(`${BACKEND}/send-consultation-reply/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          litigantEmail:   c.litigantEmail,
-          litigantName:    c.litigantName,
-          lawyerName:      user.displayName || "Your Lawyer",
-          replyMessage:    reply,
-          originalMessage: c.message,
-          preferredDate:   c.preferredDate,
-        }),
-      });
+      // Email litigant notification removed as per request
 
       setReply("");
     } catch (e) { console.error(e); }

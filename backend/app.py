@@ -301,7 +301,9 @@ def send_reminder_email(to_email: str, case_title: str, hearing_date: str,
         )
         msg.attach(MIMEText(html, "html"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, to_email, msg.as_string())
         print(f"✅ Reminder sent to {to_email} for case: {case_title}")
@@ -568,7 +570,9 @@ def send_case_added_email(req: CaseAddedEmailRequest):
 
         msg.attach(MIMEText(build_case_added_email(req), "html"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, req.client_email, msg.as_string())
 
@@ -586,14 +590,6 @@ class ConsultationEmailRequest(BaseModel):
     lawyerEmail: str
     lawyerName: str
     booking: dict
-
-class ConsultationReplyRequest(BaseModel):
-    litigantEmail: str
-    litigantName: str
-    lawyerName: str
-    replyMessage: str
-    originalMessage: str
-    preferredDate: str
 
 
 @app.post("/send-consultation-email/")
@@ -628,52 +624,15 @@ def send_consultation_email(req: ConsultationEmailRequest):
         msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
         msg["To"]      = req.lawyerEmail
         msg.attach(MIMEText(html, "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, req.lawyerEmail, msg.as_string())
         return {"status": "sent"}
     except Exception as e:
         return {"status": "failed", "error": str(e)}
 
-
-@app.post("/send-consultation-reply/")
-def send_consultation_reply(req: ConsultationReplyRequest):
-    html = f"""<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f0f4f8;margin:0;padding:32px 16px;">
-<table width="580" align="center" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
-<tr><td style="background:linear-gradient(135deg,#1a2744,#243460);padding:28px 32px;text-align:center;">
-<h1 style="margin:0;color:#fff;font-size:20px;">⚖️ LawyerLink</h1>
-<p style="margin:6px 0 0;color:rgba(255,255,255,.6);font-size:12px;text-transform:uppercase;">Consultation Response</p>
-</td></tr>
-<tr><td style="padding:28px 32px;">
-<p style="color:#1a2744;font-size:15px;font-weight:700;">Dear {req.litigantName},</p>
-<p style="color:#374151;font-size:14px;"><strong>Adv. {req.lawyerName}</strong> has responded to your consultation request.</p>
-<div style="background:linear-gradient(135deg,#fef9ee,#fef3c7);border:2px solid #c9a84c;border-radius:12px;padding:20px;margin:16px 0;">
-<p style="color:#92400e;font-size:11px;font-weight:700;text-transform:uppercase;margin:0 0 8px;">💬 Lawyer's Response</p>
-<p style="color:#1a2744;font-size:14px;line-height:1.7;margin:0;">{req.replyMessage}</p>
-</div>
-<div style="background:#f8faff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 18px;margin:12px 0;">
-<p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">Your original message:</p>
-<p style="color:#6b7280;font-size:13px;font-style:italic;margin:0;">{req.originalMessage}</p>
-<p style="color:#6b7280;font-size:12px;margin:8px 0 0;">Preferred Date: <strong>{req.preferredDate}</strong></p>
-</div>
-<div style="text-align:center;margin:20px 0;">
-<a href="https://lawyer-link-frontend.vercel.app/litigant" style="background:linear-gradient(135deg,#1a2744,#243460);color:#fff;text-decoration:none;border-radius:50px;padding:12px 28px;font-weight:800;font-size:14px;">View on LawyerLink →</a>
-</div>
-</td></tr>
-<tr><td style="background:#f8faff;padding:16px;text-align:center;"><p style="color:#9ca3af;font-size:11px;margin:0;">© {date.today().year} LawyerLink</p></td></tr>
-</table></body></html>"""
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"💬 Response from Adv. {req.lawyerName} | LawyerLink"
-        msg["From"]    = f"LawyerLink <{EMAIL_SENDER}>"
-        msg["To"]      = req.litigantEmail
-        msg.attach(MIMEText(html, "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-            server.sendmail(EMAIL_SENDER, req.litigantEmail, msg.as_string())
-        return {"status": "sent"}
-    except Exception as e:
-        return {"status": "failed", "error": str(e)}
 
 # End of app.py
 
