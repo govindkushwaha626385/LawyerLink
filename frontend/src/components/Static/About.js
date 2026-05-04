@@ -124,7 +124,7 @@ export default function About() {
                 Operating strictly within the ambit of the Advocates Act, 1961, we connect citizens with verified Bar Council Advocates and supercharge their workflow with Artificial Intelligence.
               </p>
               <ul className="ab-check-list">
-                {["Verified Bar Council Advocates", "Data-driven case win probabilities", "End-to-End encrypted case sharing", "Compliance with IT Act, 2000"].map(item => (
+                {["Verified Bar Council Advocates", "Data-driven Legal Insights", "End-to-End encrypted case sharing", "Compliance with IT Act, 2000"].map(item => (
                   <li key={item} className="ab-check-item">
                     <span className="ab-check-icon">✓</span>{item}
                   </li>

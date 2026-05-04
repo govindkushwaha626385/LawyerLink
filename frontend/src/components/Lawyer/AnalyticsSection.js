@@ -66,11 +66,7 @@ export default function AnalyticsSection({ cases }) {
     // Unique clients
     const clients = new Set(cases.map(c => c.clientEmail).filter(Boolean)).size;
 
-    // Win rate from saved AI predictions
-    const predicted = cases.filter(c => c.aiPrediction?.verdict_prediction === "Win").length;
-    const winRate = cases.filter(c => c.aiPrediction).length
-      ? Math.round((predicted / cases.filter(c => c.aiPrediction).length) * 100)
-      : null;
+
 
     // Status distribution (pie)
     const statusData = [
@@ -136,7 +132,7 @@ export default function AnalyticsSection({ cases }) {
       .map(([name, cases]) => ({ name: name.length > 14 ? name.slice(0, 14) + "…" : name, cases }))
       .sort((a, b) => b.cases - a.cases).slice(0, 6);
 
-    return { open, inProgress, closed, total, upcoming, clients, winRate, statusData, categoryData, months, hearingMonths, clientData };
+    return { open, inProgress, closed, total, upcoming, clients, statusData, categoryData, months, hearingMonths, clientData };
   }, [cases]);
 
   if (cases.length === 0) return null;
@@ -178,9 +174,7 @@ export default function AnalyticsSection({ cases }) {
           <StatCard icon="✅"  label="Closed Cases"   value={stats.closed}     sub={`${closureRate}% closure rate`} color="#7c3aed" bg="#f5f3ff" />
           <StatCard icon="👥"  label="Total Clients"  value={stats.clients}    sub="Unique clients"      color="#0ea5e9" bg="#e0f2fe" />
           <StatCard icon="📅"  label="Due This Week"  value={stats.upcoming.length} sub="Upcoming hearings" color="#dc2626" bg="#fee2e2" />
-          {stats.winRate !== null && (
-            <StatCard icon="🏆" label="AI Win Rate"  value={`${stats.winRate}%`} sub="Predicted wins"   color="#16a34a" bg="#dcfce7" />
-          )}
+
         </div>
 
         {/* Row 1: Status Pie + Monthly Trend */}

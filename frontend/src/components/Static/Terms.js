@@ -86,7 +86,7 @@ export default function Terms() {
 
                 <h2>2. AI Tools & Disclaimers</h2>
                 <p>
-                  You may have access to AI-generated "Win Probabilities" and "Case Strength" insights if shared by your Advocate.
+                  You may have access to AI-generated "Case Strength" and "Legal Strategy" insights if shared by your Advocate.
                 </p>
                 <ul>
                   <li>These AI insights are based on probabilistic algorithms referencing historical Indian court precedents.</li>
@@ -122,7 +122,7 @@ export default function Terms() {
                 </p>
                 <ul>
                   <li>The AI tool is designed to augment your legal research, not replace your professional judgment.</li>
-                  <li>You must verify all generated citations, precedents, and "Win Probability" predictions against actual legal databases before advising your clients.</li>
+                  <li>You must verify all generated citations, precedents, and "AI Case Predictor" analysis against actual legal databases before advising your clients.</li>
                   <li>LawyerLink is not liable for malpractice claims arising from unverified AI recommendations.</li>
                 </ul>
 

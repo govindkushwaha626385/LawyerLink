@@ -64,7 +64,7 @@ export default function LitigantCaseDetails() {
   const col = statusColor(caseData.status);
   const createdAt = caseData.createdAt
     ? new Date(caseData.createdAt.seconds ? caseData.createdAt.seconds * 1000 : caseData.createdAt)
-        .toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+      .toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
     : "N/A";
 
   return (
@@ -162,9 +162,7 @@ export default function LitigantCaseDetails() {
 
               <div className="lcd-hearing">
                 <span>📅 Next Hearing: <strong>{caseData.next_hearing_date || "Not set"}</strong></span>
-                {caseData.aiPrediction && (
-                  <span className="lcd-ai-badge">🤖 AI Probability: {caseData.aiPrediction.win_probability}</span>
-                )}
+
               </div>
             </div>
           </div>
@@ -182,27 +180,23 @@ export default function LitigantCaseDetails() {
               {/* ── Overview ── */}
               {activeTab === "Overview" && (
                 <>
-                  {caseData.aiPrediction && (
+                  {/* {caseData.aiPrediction && (
                     <div style={{ background: "linear-gradient(135deg, #1a2744, #243460)", borderRadius: 16, padding: "22px 26px", color: "white", marginBottom: 24, boxShadow: "0 8px 24px rgba(26,39,68,0.15)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", margin: 0, color: "#c9a84c" }}>🤖 AI Case Predictor</h3>
                         <span style={{ background: "rgba(255,255,255,0.1)", padding: "4px 12px", borderRadius: 50, fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{caseData.aiPrediction.case_strength} Strength</span>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
                         <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.1)" }}>
                           <p style={{ margin: "0 0 4px", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700 }}>Predicted Verdict</p>
-                          <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "white" }}>{caseData.aiPrediction.verdict_prediction}</p>
-                        </div>
-                        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700 }}>Win Probability</p>
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#e8c96d" }}>{caseData.aiPrediction.win_probability}</p>
+                            <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "white" }}>{caseData.aiPrediction.verdict_prediction}</p>
                             <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>Confidence: {caseData.aiPrediction.confidence_level}</span>
                           </div>
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   <h3 className="lcd-section-title">📋 Case Description</h3>
                   <div style={{ background: "#f8faff", border: "1px solid #e5e7eb", padding: 18, borderRadius: 16, borderLeft: "4px solid #1a2744" }}>

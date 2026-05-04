@@ -664,7 +664,7 @@ export default function AdminPanel() {
                         <td>
                           {c.aiPrediction ? (
                             <span style={{ background: "rgba(201,168,76,0.15)", color: "#b48b2d", padding: "4px 10px", borderRadius: "50px", fontSize: "0.7rem", fontWeight: 700, border: "1px solid rgba(201,168,76,0.3)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                              🤖 {c.aiPrediction.win_probability}
+                              🤖 {c.aiPrediction.verdict_prediction}
                             </span>
                           ) : (
                             <span style={{ fontSize: ".75rem", color: "#9ca3af" }}>—</span>

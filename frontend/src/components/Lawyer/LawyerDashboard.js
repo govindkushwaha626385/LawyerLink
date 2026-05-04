@@ -301,10 +301,10 @@ export default function LawyerDashboard() {
                             {c.priority && (
                               <span style={{
                                 fontSize: "0.68rem", fontWeight: 700, borderRadius: 50, padding: "2px 9px",
-                                background: c.priority==="Urgent"?"#fee2e2":c.priority==="High"?"#fef3c7":c.priority==="Medium"?"#fefce8":"#dcfce7",
-                                color: c.priority==="Urgent"?"#991b1b":c.priority==="High"?"#92400e":c.priority==="Medium"?"#854d0e":"#166534"
+                                background: c.priority === "Urgent" ? "#fee2e2" : c.priority === "High" ? "#fef3c7" : c.priority === "Medium" ? "#fefce8" : "#dcfce7",
+                                color: c.priority === "Urgent" ? "#991b1b" : c.priority === "High" ? "#92400e" : c.priority === "Medium" ? "#854d0e" : "#166534"
                               }}>
-                                {c.priority==="Urgent"?"🔴":c.priority==="High"?"🟠":c.priority==="Medium"?"🟡":"🟢"} {c.priority}
+                                {c.priority === "Urgent" ? "🔴" : c.priority === "High" ? "🟠" : c.priority === "Medium" ? "🟡" : "🟢"} {c.priority}
                               </span>
                             )}
                             {c.stage && (
@@ -319,9 +319,9 @@ export default function LawyerDashboard() {
                         {c.courtName && <p className="ld-case-meta">🏛️ {c.courtName}</p>}
                         {c.opposingParty && <p className="ld-case-meta">⚔️ vs {c.opposingParty}</p>}
                         <p className="ld-case-meta">🧾 Case ID: <strong>{c.case_id}</strong></p>
-                        {c.aiPrediction && (
-                          <span className="ld-ai-badge">🤖 Win Prob: {c.aiPrediction.win_probability}%</span>
-                        )}
+                        {/* {c.aiPrediction && (
+
+                        )} */}
                         <div className="ld-hearing-box">
                           📅 Next Hearing: <strong>{c.next_hearing_date || "Not set"}</strong>
                         </div>

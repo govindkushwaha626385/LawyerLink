@@ -351,11 +351,7 @@ export default function LitigantDashboard() {
                         <span className="lit-status-badge" style={{ background: col.bg, color: col.text }}>
                           {c.status || "In Progress"}
                         </span>
-                        {c.aiPrediction && (
-                          <span className="lit-status-badge" style={{ background: "rgba(201,168,76,0.15)", color: "#b48b2d", marginLeft: 8, border: "1px solid rgba(201,168,76,0.3)" }}>
-                            🤖 Win Prob: {c.aiPrediction.win_probability}%
-                          </span>
-                        )}
+
                         <div className="lit-hearing-box">
                           📅 Next Hearing: <strong>{c.next_hearing_date || "Not set"}</strong>
                         </div>

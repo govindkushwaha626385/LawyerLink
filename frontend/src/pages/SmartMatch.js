@@ -126,7 +126,7 @@ export default function SmartMatch() {
         .sm-cat{font-size:.8rem;color:#6b7280;margin-bottom:10px;}
         .sm-meta{font-size:.78rem;color:#6b7280;margin-bottom:3px;}
         .sm-verified{display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;border-radius:50px;padding:2px 10px;font-size:.7rem;font-weight:700;margin-bottom:8px;}
-        .sm-winrate{display:inline-flex;align-items:center;gap:4px;background:#eef2ff;color:#4338ca;border-radius:50px;padding:2px 10px;font-size:.7rem;font-weight:700;margin-bottom:8px;margin-left:6px;}
+
         .sm-reason{font-size:.81rem;color:#374151;background:rgba(201,168,76,.08);padding:10px 13px;border-radius:8px;margin:10px 0;font-style:italic;line-height:1.55;border-left:3px solid #c9a84c;}
         .sm-strengths{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
         .sm-strength{background:#f0f4ff;color:#4338ca;border-radius:50px;padding:2px 10px;font-size:.68rem;font-weight:600;}
@@ -212,7 +212,7 @@ export default function SmartMatch() {
                   const scoreColor = l.aiScore >= 85 ? "#16a34a" : l.aiScore >= 70 ? "#d97706" : "#dc2626";
                   const scoreBg    = l.aiScore >= 85 ? "#dcfce7" : l.aiScore >= 70 ? "#fef3c7" : "#fee2e2";
                   const barColor   = i === 0 ? "linear-gradient(90deg,#c9a84c,#1a2744)" : i === 1 ? "linear-gradient(90deg,#1a2744,#4338ca)" : "linear-gradient(90deg,#374151,#6b7280)";
-                  const winRate    = l.aiPrediction ? `${l.aiPrediction.win_probability}% predicted win` : null;
+
                   return (
                     <div key={l.id} className="sm-card">
                       <div className="sm-rank-bar" style={{ background: barColor }} />
@@ -223,7 +223,7 @@ export default function SmartMatch() {
                         </div>
                         <div style={{ marginBottom: 8 }}>
                           {l.verified && <span className="sm-verified">✅ Verified</span>}
-                          {winRate && <span className="sm-winrate">🏆 {winRate}</span>}
+
                         </div>
                         <h3 className="sm-name">{l.fullName}</h3>
                         <p className="sm-cat">{l.category || "General Practice"}</p>

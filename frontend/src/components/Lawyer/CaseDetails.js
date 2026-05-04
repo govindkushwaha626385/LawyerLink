@@ -259,7 +259,7 @@ export default function CaseDetails() {
                   {isEditing ? (
                     <select name="stage" className="cd-edit-input" value={updatedData.stage || ""} onChange={handleChange}>
                       <option value="">Select</option>
-                      {["Filing","Arguments","Evidence","Judgment","Disposal","Appeal"].map(s => <option key={s}>{s}</option>)}
+                      {["Filing", "Arguments", "Evidence", "Judgment", "Disposal", "Appeal"].map(s => <option key={s}>{s}</option>)}
                     </select>
                   ) : <p className="cd-info-value">{caseData.stage || "—"}</p>}
                 </div>
@@ -335,27 +335,23 @@ export default function CaseDetails() {
               {/* ── Overview ── */}
               {activeTab === "Overview" && (
                 <>
-                  {caseData.aiPrediction && (
+                  {/* {caseData.aiPrediction && (
                     <div style={{ background: "linear-gradient(135deg, #1a2744, #243460)", borderRadius: 16, padding: "22px 26px", color: "white", marginBottom: 28, boxShadow: "0 8px 24px rgba(26,39,68,0.15)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", margin: 0, color: "#c9a84c" }}>🤖 AI Case Predictor Snapshot</h3>
                         <span style={{ background: "rgba(255,255,255,0.1)", padding: "4px 12px", borderRadius: 50, fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{caseData.aiPrediction.case_strength} Strength</span>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
                         <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.1)" }}>
                           <p style={{ margin: "0 0 4px", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700 }}>Predicted Verdict</p>
-                          <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "white" }}>{caseData.aiPrediction.verdict_prediction}</p>
-                        </div>
-                        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "0.7rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700 }}>Win Probability</p>
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#e8c96d" }}>{caseData.aiPrediction.win_probability}</p>
+                            <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "white" }}>{caseData.aiPrediction.verdict_prediction}</p>
                             <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>Confidence: {caseData.aiPrediction.confidence_level}</span>
                           </div>
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   <h3 className="cd-section-title">📋 Description</h3>
                   {isEditing ? (

@@ -45,7 +45,7 @@ function buildPrompt(c) {
 
 {
   "verdict_prediction": "Win" | "Settle" | "Partial Win" | "Dismiss",
-  "win_probability": <number 0-100>,
+
   "confidence_level": "High" | "Medium" | "Low",
   "case_strength": <number 0-100>,
   "evidence_strength": <number 0-100>,
@@ -114,7 +114,7 @@ function GaugeBar({ label, value, color }) {
   );
 }
 
-function VerdictOrb({ verdict, probability }) {
+function VerdictOrb({ verdict }) {
   const map = {
     "Win": { color: "#16a34a", bg: "#dcfce7", icon: "🏆" },
     "Partial Win": { color: "#d97706", bg: "#fef3c7", icon: "⚖️" },
@@ -126,7 +126,7 @@ function VerdictOrb({ verdict, probability }) {
     <div style={{ textAlign: "center", padding: "32px 20px" }}>
       <div style={{
         width: 140, height: 140, borderRadius: "50%",
-        background: `conic-gradient(${v.color} ${probability * 3.6}deg, #e5e7eb 0deg)`,
+        background: v.color,
         display: "flex", alignItems: "center", justifyContent: "center",
         margin: "0 auto 20px", boxShadow: `0 8px 28px ${v.color}33`,
         position: "relative",
@@ -136,8 +136,7 @@ function VerdictOrb({ verdict, probability }) {
           background: "white", display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
         }}>
-          <span style={{ fontSize: "1.8rem" }}>{v.icon}</span>
-          <span style={{ fontSize: "1.4rem", fontWeight: 800, color: v.color, lineHeight: 1 }}>{probability}%</span>
+          <span style={{ fontSize: "2.8rem" }}>{v.icon}</span>
         </div>
       </div>
       <div style={{
@@ -223,7 +222,7 @@ export default function CasePredictor() {
         await updateDoc(doc(db, "cases", id), {
           aiPrediction: {
             verdict_prediction: result.verdict_prediction,
-            win_probability: result.win_probability,
+
             confidence_level: result.confidence_level,
             case_strength: result.case_strength,
             analyzedAt: new Date().toISOString(),
@@ -253,7 +252,7 @@ export default function CasePredictor() {
       <strong>Generated:</strong> ${new Date().toLocaleString("en-IN")}</p>
       <h2>Prediction Summary</h2>
       <table><tr><td><strong>Verdict</strong></td><td>${analysis.verdict_prediction}</td></tr>
-      <tr><td><strong>Win Probability</strong></td><td>${analysis.win_probability}%</td></tr>
+
       <tr><td><strong>Confidence</strong></td><td>${analysis.confidence_level}</td></tr>
       <tr><td><strong>Case Strength</strong></td><td>${analysis.case_strength}%</td></tr>
       <tr><td><strong>Duration</strong></td><td>${analysis.estimated_duration}</td></tr></table>
@@ -360,7 +359,7 @@ export default function CasePredictor() {
                   return (
                     <div key={h.id} style={{ background: "#f8faff", border: `2px solid ${col}33`, borderRadius: 14, padding: "14px 18px", minWidth: 180, flexShrink: 0 }}>
                       <p style={{ fontSize: ".68rem", color: "#9ca3af", margin: "0 0 6px", fontWeight: 700, textTransform: "uppercase" }}>Run #{history.length - i}</p>
-                      <p style={{ fontWeight: 800, color: col, fontSize: "1.1rem", margin: 0 }}>{h.win_probability}%</p>
+
                       <p style={{ fontSize: ".78rem", color: col, fontWeight: 700, margin: "2px 0" }}>{h.verdict_prediction}</p>
                       <p style={{ fontSize: ".7rem", color: "#9ca3af", margin: 0 }}>{new Date(h.analyzedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}</p>
                     </div>
@@ -418,7 +417,7 @@ export default function CasePredictor() {
                 <div style={{ display: "flex", flexWrap: "wrap" }}>
                   {/* Verdict Orb */}
                   <div style={{ flex: "0 0 280px", borderRight: "1px solid #f0f0f0", padding: "20px 0" }}>
-                    <VerdictOrb verdict={analysis.verdict_prediction} probability={analysis.win_probability} />
+                    <VerdictOrb verdict={analysis.verdict_prediction} />
                   </div>
 
                   {/* Strength Bars */}
