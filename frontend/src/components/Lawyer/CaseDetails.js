@@ -29,6 +29,9 @@ export default function CaseDetails() {
   const [lawyerData, setLawyerData] = useState(null);
   const user = auth.currentUser;
 
+  // Compute today's date in YYYY-MM-DD format for input limits
+  const today = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     const fetchCase = async () => {
       try {
@@ -280,7 +283,7 @@ export default function CaseDetails() {
                   )}
                 </div>
                 <div><p className="cd-info-label">Case Filing Date</p>
-                  {isEditing ? <input type="date" name="filingDate" className="cd-edit-input" value={updatedData.filingDate || ""} onChange={handleChange} /> : <p className="cd-info-value">{caseData.filingDate || "—"}</p>}
+                  {isEditing ? <input type="date" name="filingDate" className="cd-edit-input" max={today} value={updatedData.filingDate || ""} onChange={handleChange} /> : <p className="cd-info-value">{caseData.filingDate || "—"}</p>}
                 </div>
                 <div><p className="cd-info-label">Opposing Party</p>
                   {isEditing ? <input name="opposingParty" className="cd-edit-input" value={updatedData.opposingParty || ""} onChange={handleChange} placeholder="Opposing party name" /> : <p className="cd-info-value">{caseData.opposingParty || "—"}</p>}
@@ -303,6 +306,7 @@ export default function CaseDetails() {
                 {isEditing ? (
                   <input type="date" name="next_hearing_date" className="cd-edit-input"
                     style={{ width: "auto", display: "inline-block", marginLeft: 8 }}
+                    min={today}
                     value={updatedData.next_hearing_date || ""} onChange={handleChange} />
                 ) : (
                   <strong>{caseData.next_hearing_date || "Not set"}</strong>

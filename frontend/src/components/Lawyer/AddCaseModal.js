@@ -51,6 +51,9 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
   const [showSuggestions, setShowSuggestions] = useState(false);
   const user = auth.currentUser;
 
+  // Compute today's date in YYYY-MM-DD format for input limits
+  const today = new Date().toISOString().split("T")[0];
+
   // Fetch advocate number if not passed as prop
   useEffect(() => {
     const fetchAdvocateNumber = async () => {
@@ -279,11 +282,13 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Case Filing Date <span className="text-danger">*</span></label>
                 <input type="date" className="form-control acm-input" name="filingDate"
+                  max={today}
                   value={caseData.filingDate} onChange={handleChange} required />
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Next Hearing Date <span className="text-danger">*</span></label>
                 <input type="date" className="form-control acm-input" name="next_hearing_date"
+                  min={today}
                   value={caseData.next_hearing_date} onChange={handleChange} required />
               </div>
               <div className="col-12">
