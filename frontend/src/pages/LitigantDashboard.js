@@ -65,7 +65,7 @@ export default function LitigantDashboard() {
     const q = query(collection(db, "consultations"), where("litigantEmail", "==", user.email.trim().toLowerCase()));
     const unsub = onSnapshot(q, snap => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      list.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+      list.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
       setConsultations(list);
     });
     return () => unsub();
@@ -245,7 +245,7 @@ export default function LitigantDashboard() {
                       {activeCons.messages?.map((msg, idx) => {
                         const isMe = msg.sender === "litigant";
                         return (
-                          <div key={idx} style={{ 
+                          <div key={idx} style={{
                             alignSelf: isMe ? "flex-end" : "flex-start",
                             background: isMe ? "#1a2744" : "#f1f5f9",
                             color: isMe ? "white" : "#1e293b",
@@ -262,11 +262,11 @@ export default function LitigantDashboard() {
                     </div>
 
                     <div style={{ display: "flex", gap: 10 }}>
-                      <input 
-                        type="text" 
-                        value={replyText} 
-                        onChange={e => setReplyText(e.target.value)} 
-                        placeholder="Type a message to your lawyer..." 
+                      <input
+                        type="text"
+                        value={replyText}
+                        onChange={e => setReplyText(e.target.value)}
+                        placeholder="Type a message to your lawyer..."
                         onKeyDown={e => e.key === "Enter" && sendLitigantReply()}
                         style={{ flexGrow: 1, border: "1.5px solid #e5e7eb", borderRadius: 50, padding: "10px 18px", fontSize: "0.85rem", outline: "none" }}
                       />
@@ -304,21 +304,11 @@ export default function LitigantDashboard() {
 
           {/* Cases section */}
           <div className="lit-section">
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22, flexWrap: "wrap", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h3 className="lit-section-title">My Cases</h3>
-                <span className="lit-count-badge">{cases.length}</span>
-              </div>
-              <button
-                onClick={() => navigate("/link-case")}
-                style={{
-                  background: "transparent", border: "1.5px solid #1a2744", borderRadius: 50,
-                  padding: "7px 18px", fontFamily: "'Inter',sans-serif", fontSize: "0.78rem",
-                  fontWeight: 700, color: "#1a2744", cursor: "pointer", transition: "all 0.2s"
-                }}>
-                🔗 Link a Case
-              </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
+              <h3 className="lit-section-title">My Cases</h3>
+              <span className="lit-count-badge">{cases.length}</span>
             </div>
+
 
             {cases.length === 0 ? (
               <div className="lit-empty">
@@ -341,10 +331,10 @@ export default function LitigantDashboard() {
                             {c.priority && (
                               <span style={{
                                 fontSize: "0.68rem", fontWeight: 700, borderRadius: 50, padding: "2px 9px",
-                                background: c.priority==="Urgent"?"#fee2e2":c.priority==="High"?"#fef3c7":c.priority==="Medium"?"#fefce8":"#dcfce7",
-                                color: c.priority==="Urgent"?"#991b1b":c.priority==="High"?"#92400e":c.priority==="Medium"?"#854d0e":"#166534"
+                                background: c.priority === "Urgent" ? "#fee2e2" : c.priority === "High" ? "#fef3c7" : c.priority === "Medium" ? "#fefce8" : "#dcfce7",
+                                color: c.priority === "Urgent" ? "#991b1b" : c.priority === "High" ? "#92400e" : c.priority === "Medium" ? "#854d0e" : "#166534"
                               }}>
-                                {c.priority==="Urgent"?"🔴":c.priority==="High"?"🟠":c.priority==="Medium"?"🟡":"🟢"} {c.priority}
+                                {c.priority === "Urgent" ? "🔴" : c.priority === "High" ? "🟠" : c.priority === "Medium" ? "🟡" : "🟢"} {c.priority}
                               </span>
                             )}
                             {c.stage && (

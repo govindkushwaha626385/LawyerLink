@@ -19,7 +19,6 @@ import LawyerDashboard from "./components/Lawyer/LawyerDashboard";
 import MyCases from "./components/Lawyer/MyCases";
 import CaseDetails from "./components/Lawyer/CaseDetails";
 import AddCaseModal from "./components/Lawyer/AddCaseModal";
-import LinkCase from "./pages/LinkCase";
 
 // --- Litigant Pages ---
 import LitigantDashboard from "./pages/LitigantDashboard";
@@ -142,14 +141,6 @@ function AppLayout() {
             element={
               <ProtectedRoute>
                 <AddCaseModal />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/link-case"
-            element={
-              <ProtectedRoute>
-                <LinkCase user={user} />
               </ProtectedRoute>
             }
           />
