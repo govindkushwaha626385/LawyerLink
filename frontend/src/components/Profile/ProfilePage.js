@@ -139,11 +139,21 @@ export default function ProfilePage() {
             <span className="pr-role-badge">
               {isLawyer ? "👨‍⚖️" : "⚖️"} {userData.role?.toUpperCase()}
             </span>
-            {isLawyer && userData.verified && (
+            {isLawyer && (
               <div style={{ marginTop: 6 }}>
-                <span style={{ background: "#d1fae5", color: "#065f46", borderRadius: "50px", padding: "3px 14px", fontSize: "0.78rem", fontWeight: 700 }}>
-                  ✅ Verified Lawyer
-                </span>
+                {(userData.verificationStatus === "approved" || (userData.verified && !userData.verificationStatus)) ? (
+                  <span style={{ background: "#d1fae5", color: "#065f46", borderRadius: "50px", padding: "3px 14px", fontSize: "0.78rem", fontWeight: 700 }}>
+                    ✅ Verified Lawyer
+                  </span>
+                ) : userData.verificationStatus === "rejected" ? (
+                  <span style={{ background: "#fee2e2", color: "#991b1b", borderRadius: "50px", padding: "3px 14px", fontSize: "0.78rem", fontWeight: 700 }}>
+                    ❌ Verification Rejected
+                  </span>
+                ) : (
+                  <span style={{ background: "#fef9c3", color: "#854d0e", borderRadius: "50px", padding: "3px 14px", fontSize: "0.78rem", fontWeight: 700 }}>
+                    ⏳ Verification Pending
+                  </span>
+                )}
               </div>
             )}
             {isLawyer && userData.rating > 0 && (

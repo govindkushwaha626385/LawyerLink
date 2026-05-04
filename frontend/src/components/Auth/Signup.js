@@ -10,18 +10,29 @@ const EJS_SERVICE  = "service_2tvrzjy";
 const EJS_TEMPLATE = "template_lrtrlbm";
 const EJS_PUBLIC   = "iiTZNMe5xBgrLmn2L";
 
+// ── Cloudinary config ──────────────────────────────────
 const CLOUD_NAME    = "dzfoal3fg";
 const UPLOAD_PRESET = "lawyerlink_documents";
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 async function uploadAvatar(file) {
   const data = new FormData();
   data.append("file", file);
   data.append("upload_preset", UPLOAD_PRESET);
   data.append("folder", "lawyerlink/avatars");
-  const res = await fetch(CLOUDINARY_URL, { method: "POST", body: data });
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: data });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error?.message || "Image upload failed");
+  return json.secure_url;
+}
+
+async function uploadCertificate(file) {
+  const data = new FormData();
+  data.append("file", file);
+  data.append("upload_preset", UPLOAD_PRESET);
+  data.append("folder", "lawyerlink/enrollment_certs");
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: data });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error?.message || "Certificate upload failed");
   return json.secure_url;
 }
 
@@ -34,6 +45,8 @@ export default function Signup() {
   const [error, setError]               = useState("");
   const [avatarFile, setAvatarFile]     = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [certFile, setCertFile]         = useState(null);
+  const [certName, setCertName]         = useState("");
   const [formData, setFormData]         = useState({
     fullName: "", phone: "", address: "",
     experience: "", category: "", advocateNumber: "",
@@ -44,6 +57,7 @@ export default function Signup() {
   const [enteredOTP, setEnteredOTP]     = useState("");
 
   const avatarInputRef = useRef(null);
+  const certInputRef   = useRef(null);
   const location       = useLocation();
   const navigate       = useNavigate();
   const role           = new URLSearchParams(location.search).get("role") || "litigant";
@@ -69,6 +83,10 @@ export default function Signup() {
       if (isLawyer) {
         if (!formData.advocateNumber || !formData.registrationDate) {
           setError("Advocate Reg. Number and Registration Date are required.");
+          setLoading(false); return;
+        }
+        if (!certFile) {
+          setError("Please upload your Bar Council Enrollment Certificate (image format only).");
           setLoading(false); return;
         }
 
@@ -175,14 +193,22 @@ export default function Signup() {
       };
 
       if (isLawyer) {
+        let certUrl = "";
+        if (certFile) {
+          setLoadingText("Uploading enrollment certificate...");
+          certUrl = await uploadCertificate(certFile);
+        }
         Object.assign(userData, {
-          experience:       formData.experience       || "",
-          category:         formData.category         || "",
-          advocateNumber:   formData.advocateNumber.trim().toUpperCase(),
-          registrationDate: formData.registrationDate || "",
-          casesHandled:     0,
-          rating:           0,
-          verified:         true, // verified because they passed master data check
+          experience:            formData.experience       || "",
+          category:              formData.category         || "",
+          advocateNumber:        formData.advocateNumber.trim().toUpperCase(),
+          registrationDate:      formData.registrationDate || "",
+          casesHandled:          0,
+          rating:                0,
+          verified:              false,          // Admin must approve
+          verificationStatus:    "pending",      // pending | approved | rejected
+          enrollmentCertUrl:     certUrl,        // uploaded cert for admin review
+          verificationSubmittedAt: new Date().toISOString(),
         });
       }
 
@@ -432,8 +458,49 @@ export default function Signup() {
                   <option value="">— Select specialization —</option>
                   {["Criminal Law","Civil Law","Corporate Law","Family Law",
                     "Property Law","Cyber Law","Labour Law","Tax Law","Constitutional Law"]
-                    .map(c => <option key={c} value={c}>{c}</option>)}
+                .map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+              </div>
+
+              {/* ── Enrollment Certificate Upload ── */}
+              <div className="sw-section">Enrollment Certificate <span style={{color:"#dc2626"}}>*</span></div>
+              <div className="sw-field">
+                <input
+                  ref={certInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (!f.type.startsWith("image/")) { setError("Certificate must be an image (JPG, PNG)."); return; }
+                    if (f.size > 10 * 1024 * 1024) { setError("Certificate must be under 10 MB."); return; }
+                    setCertFile(f);
+                    setCertName(f.name);
+                    setError("");
+                  }}
+                />
+                {certFile ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 12, padding: "12px 16px" }}>
+                    <span style={{ fontSize: "1.5rem" }}>🖼️</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 700, color: "#15803d", fontSize: ".83rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{certName}</p>
+                      <p style={{ margin: 0, fontSize: ".72rem", color: "#16a34a" }}>✅ Certificate selected</p>
+                    </div>
+                    <button type="button" onClick={() => { setCertFile(null); setCertName(""); certInputRef.current.value = ""; }}
+                      style={{ background: "none", border: "none", color: "#dc2626", fontSize: ".75rem", fontWeight: 700, cursor: "pointer" }}>✕ Remove</button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => certInputRef.current?.click()}
+                    style={{ width: "100%", border: "2px dashed #93c5fd", borderRadius: 12, padding: "18px", background: "#eff6ff", cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "center" }}>
+                    <p style={{ margin: "0 0 4px", fontSize: "1.4rem" }}>📋</p>
+                    <p style={{ margin: 0, fontWeight: 700, color: "#1d4ed8", fontSize: ".84rem" }}>Upload Enrollment Certificate</p>
+                    <p style={{ margin: "3px 0 0", fontSize: ".72rem", color: "#6b7280" }}>Image Only (JPG, PNG) · Max 10 MB · Required</p>
+                  </button>
+                )}
+                <p style={{ fontSize: ".7rem", color: "#6b7280", marginTop: 6 }}>
+                  📌 Your certificate will be reviewed by our team. Your account will be activated once approved (usually within 24 hours).
+                </p>
               </div>
             </>
           )}

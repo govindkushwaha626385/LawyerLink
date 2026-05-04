@@ -14,6 +14,8 @@ export default function LawyerDashboard() {
   const [advocateNumber, setAdvocateNumber] = useState("");
   const [lawyerName, setLawyerName] = useState("");
   const [registrationDate, setRegistrationDate] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState("");
+  const [rejectionRemark, setRejectionRemark] = useState("");
   const [pendingConsultations, setPendingConsultations] = useState(0);
   const navigate = useNavigate();
   const user = auth.currentUser;
@@ -24,9 +26,12 @@ export default function LawyerDashboard() {
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
-        setAdvocateNumber(userSnap.data().advocateNumber || "");
-        setLawyerName(userSnap.data().fullName || "Lawyer");
-        setRegistrationDate(userSnap.data().registrationDate || "");
+        const d = userSnap.data();
+        setAdvocateNumber(d.advocateNumber || "");
+        setLawyerName(d.fullName || "Lawyer");
+        setRegistrationDate(d.registrationDate || "");
+        setVerificationStatus(d.verificationStatus || (d.verified ? "approved" : "pending"));
+        setRejectionRemark(d.verificationRemark || "");
       }
     };
     fetchAdvocateNumber();
@@ -219,6 +224,32 @@ export default function LawyerDashboard() {
               ＋ Add New Case
             </button>
           </div>
+
+          {/* ── Verification Status Banner ── */}
+          {verificationStatus === "pending" && (
+            <div style={{ background: "linear-gradient(135deg,#fffbeb,#fef9c3)", border: "1.5px solid #fcd34d", borderRadius: 14, padding: "14px 20px", marginBottom: 22, display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: "1.8rem" }}>⏳</span>
+              <div>
+                <p style={{ margin: 0, fontWeight: 700, color: "#92400e", fontSize: ".9rem" }}>Verification Pending — Account Under Review</p>
+                <p style={{ margin: "3px 0 0", fontSize: ".78rem", color: "#a16207" }}>Your enrollment certificate has been submitted and is being reviewed by our team. Full access will be granted once approved (usually within 24 hours).</p>
+              </div>
+            </div>
+          )}
+          {verificationStatus === "rejected" && (
+            <div style={{ background: "linear-gradient(135deg,#fff1f2,#fee2e2)", border: "1.5px solid #fca5a5", borderRadius: 14, padding: "14px 20px", marginBottom: 22, display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: "1.8rem" }}>❌</span>
+              <div>
+                <p style={{ margin: 0, fontWeight: 700, color: "#991b1b", fontSize: ".9rem" }}>Verification Rejected — Action Required</p>
+                <p style={{ margin: "3px 0 0", fontSize: ".78rem", color: "#b91c1c" }}>{rejectionRemark || "Your certificate was rejected. Please contact support or re-submit with a valid document."}</p>
+              </div>
+            </div>
+          )}
+          {verificationStatus === "approved" && (
+            <div style={{ background: "linear-gradient(135deg,#f0fdf4,#dcfce7)", border: "1.5px solid #86efac", borderRadius: 14, padding: "12px 20px", marginBottom: 22, display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: "1.5rem" }}>✅</span>
+              <p style={{ margin: 0, fontWeight: 700, color: "#15803d", fontSize: ".88rem" }}>Verified Advocate — Your account is fully verified by LawyerLink.</p>
+            </div>
+          )}
 
           {/* ── Stats ── */}
           <div className="ld-stats">

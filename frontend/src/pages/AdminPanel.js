@@ -68,10 +68,18 @@ export default function AdminPanel() {
   };
 
   // ── Actions ──────────────────────────────
-  const toggleVerify = async (lawyerId, current) => {
-    await updateDoc(doc(db, "users", lawyerId), { verified: !current });
-    setLawyers(prev => prev.map(l => l.id === lawyerId ? { ...l, verified: !current } : l));
-    showToast(current ? "✅ Verification revoked" : "✅ Lawyer verified successfully");
+  const updateVerification = async (lawyerId, status, remark = "") => {
+    const isVerified = status === "approved";
+    await updateDoc(doc(db, "users", lawyerId), { 
+      verified: isVerified,
+      verificationStatus: status,
+      verificationRemark: remark
+    });
+    setLawyers(prev => prev.map(l => l.id === lawyerId ? { ...l, verified: isVerified, verificationStatus: status, verificationRemark: remark } : l));
+    if (selectedLawyer && selectedLawyer.id === lawyerId) {
+      setSelectedLawyer({ ...selectedLawyer, verified: isVerified, verificationStatus: status, verificationRemark: remark });
+    }
+    showToast(`✅ Lawyer verification ${status}`);
   };
 
   // updateCaseStatus removed (Change Status column was removed from UI)
@@ -100,8 +108,8 @@ export default function AdminPanel() {
   // ── Stats ─────────────────────────────────
   const stats = useMemo(() => ({
     totalLawyers:    lawyers.length,
-    verified:        lawyers.filter(l => l.verified).length,
-    pendingVerify:   lawyers.filter(l => !l.verified).length,
+    verified:        lawyers.filter(l => l.verificationStatus === "approved" || (l.verified && !l.verificationStatus)).length,
+    pendingVerify:   lawyers.filter(l => l.verificationStatus === "pending" || (!l.verified && !l.verificationStatus)).length,
     totalLitigants:  litigants.length,
     totalCases:      cases.length,
     openCases:       cases.filter(c => c.status === "Open").length,
@@ -121,8 +129,9 @@ export default function AdminPanel() {
       l.email?.toLowerCase().includes(search.toLowerCase()) ||
       l.category?.toLowerCase().includes(search.toLowerCase())
     );
-    if (filterVerified === "verified") data = data.filter(l => l.verified);
-    if (filterVerified === "pending")  data = data.filter(l => !l.verified);
+    if (filterVerified === "verified") data = data.filter(l => l.verificationStatus === "approved" || (l.verified && !l.verificationStatus));
+    if (filterVerified === "pending")  data = data.filter(l => l.verificationStatus === "pending" || (!l.verified && !l.verificationStatus));
+    if (filterVerified === "rejected") data = data.filter(l => l.verificationStatus === "rejected");
     return data;
   }, [lawyers, search, filterVerified]);
 
@@ -298,11 +307,22 @@ export default function AdminPanel() {
                 <p className="adm-detail-name">{selectedLawyer.fullName || "Unknown"}</p>
                 <p className="adm-detail-sub">{selectedLawyer.email}</p>
               </div>
-              {selectedLawyer.verified
+              {selectedLawyer.verificationStatus === "approved" || (selectedLawyer.verified && !selectedLawyer.verificationStatus)
                 ? <span className="badge badge-verified" style={{marginLeft:"auto"}}>✅ Verified</span>
+                : selectedLawyer.verificationStatus === "rejected"
+                ? <span className="badge badge-closed" style={{marginLeft:"auto"}}>❌ Rejected</span>
                 : <span className="badge badge-pending" style={{marginLeft:"auto"}}>⏳ Pending</span>}
             </div>
             <div className="adm-detail-body">
+              {selectedLawyer.enrollmentCertUrl && (
+                <div style={{ marginBottom: 16 }}>
+                  <span className="adm-detail-key" style={{ display: "block", marginBottom: 6 }}>Enrollment Certificate</span>
+                  <a href={selectedLawyer.enrollmentCertUrl} target="_blank" rel="noreferrer" style={{ display: "block", borderRadius: 8, overflow: "hidden", border: "1.5px solid #e5e7eb", width: "100%", maxHeight: 200, background: "#f9fafb", textDecoration: "none" }}>
+                    <img src={selectedLawyer.enrollmentCertUrl} alt="Enrollment Certificate" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                  </a>
+                  <p style={{ margin: "6px 0 0", fontSize: ".72rem", color: "#6b7280", textAlign: "center" }}>Click image to view full size</p>
+                </div>
+              )}
               {[
                 ["Specialization",    selectedLawyer.category || "—"],
                 ["Advocate Number",   selectedLawyer.advocateNumber || "—"],
@@ -320,13 +340,27 @@ export default function AdminPanel() {
                 </div>
               ))}
               <div style={{display:"flex", gap:8, marginTop:14}}>
-                <button
-                  className={selectedLawyer.verified ? "btn-revoke" : "btn-verify"}
-                  style={{flex:1, padding:"10px"}}
-                  onClick={() => { toggleVerify(selectedLawyer.id, selectedLawyer.verified); setSelectedLawyer({...selectedLawyer, verified:!selectedLawyer.verified}); }}
-                >
-                  {selectedLawyer.verified ? "Revoke Verification" : "✅ Verify Lawyer"}
-                </button>
+                {selectedLawyer.verificationStatus !== "approved" && (
+                  <button
+                    className="btn-verify"
+                    style={{flex:1, padding:"10px", background: "#16a34a", color: "white", border: "none"}}
+                    onClick={() => updateVerification(selectedLawyer.id, "approved")}
+                  >
+                    ✅ Approve Verification
+                  </button>
+                )}
+                {selectedLawyer.verificationStatus !== "rejected" && (
+                  <button
+                    className="btn-revoke"
+                    style={{flex:1, padding:"10px"}}
+                    onClick={() => {
+                      const remark = prompt("Reason for rejection:");
+                      if (remark !== null) updateVerification(selectedLawyer.id, "rejected", remark);
+                    }}
+                  >
+                    ❌ Reject Verification
+                  </button>
+                )}
                 <button className="adm-detail-close" style={{flex:1}} onClick={() => setSelectedLawyer(null)}>Close</button>
               </div>
             </div>
@@ -453,19 +487,19 @@ export default function AdminPanel() {
                     )}
                   </div>
                   <div style={{maxHeight:200, overflowY:"auto"}}>
-                    {lawyers.filter(l => !l.verified).length === 0 ? (
+                    {lawyers.filter(l => l.verificationStatus === "pending" || (!l.verified && !l.verificationStatus)).length === 0 ? (
                       <div className="adm-empty" style={{padding:"28px"}}>
                         <p style={{margin:0,fontSize:".85rem"}}>🎉 All lawyers are verified!</p>
                       </div>
                     ) : (
-                      lawyers.filter(l => !l.verified).slice(0,5).map(l => (
+                      lawyers.filter(l => l.verificationStatus === "pending" || (!l.verified && !l.verificationStatus)).slice(0,5).map(l => (
                         <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 20px",borderBottom:"1px solid #f9fafb"}}>
                           <div className="adm-avatar adm-avatar-lawyer">{(l.fullName||"L").charAt(0)}</div>
                           <div style={{flex:1,minWidth:0}}>
                             <p style={{margin:0,fontSize:".83rem",fontWeight:700,color:"#1a2744",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.fullName||"—"}</p>
                             <p style={{margin:0,fontSize:".72rem",color:"#9ca3af"}}>{l.category||"—"}</p>
                           </div>
-                          <button className="btn-verify" onClick={() => toggleVerify(l.id, false)}>Verify</button>
+                          <button className="adm-export-btn" style={{padding:"6px 14px"}} onClick={() => setSelectedLawyer(l)}>Review</button>
                         </div>
                       ))
                     )}
@@ -498,6 +532,7 @@ export default function AdminPanel() {
                   <option value="all">All Status</option>
                   <option value="verified">✅ Verified</option>
                   <option value="pending">⏳ Pending</option>
+                  <option value="rejected">❌ Rejected</option>
                 </select>
               </div>
               <div className="adm-card-body" style={{overflowX:"auto"}}>
@@ -541,17 +576,15 @@ export default function AdminPanel() {
                           </span>
                         </td>
                         <td>
-                          {l.verified
+                          {l.verificationStatus === "approved" || (l.verified && !l.verificationStatus)
                             ? <span className="badge badge-verified">✅ Verified</span>
+                            : l.verificationStatus === "rejected"
+                            ? <span className="badge badge-closed">❌ Rejected</span>
                             : <span className="badge badge-pending">⏳ Pending</span>}
                         </td>
                         <td>
                           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                            <button
-                              className={l.verified ? "btn-revoke" : "btn-verify"}
-                              onClick={() => toggleVerify(l.id, l.verified)}>
-                              {l.verified ? "Revoke" : "✅ Verify"}
-                            </button>
+
                             <button className="adm-export-btn" style={{padding:"5px 12px",fontSize:".73rem"}}
                               onClick={() => setSelectedLawyer(l)}>
                               Details
