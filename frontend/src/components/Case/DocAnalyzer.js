@@ -1,23 +1,27 @@
 // src/components/Case/DocAnalyzer.js
 import React, { useState } from "react";
 
+import { extractTextFromPDF } from "../../utils/pdfParser";
+import { toBase64, readAsText, isPdf, isImage, isText } from "../../utils/fileUtils";
+
 const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
 const GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions";
 
-const SYSTEM_PROMPT = `You are a senior Indian legal analyst with 30+ years of experience.
-Analyze the provided legal document text and return ONLY a valid JSON object with this exact structure:
+const SYSTEM_PROMPT = `You are an elite Indian legal analyst and corporate counsel with 30+ years of experience.
+Analyze the provided legal document text (e.g., Vakalatnama, Plaint, Written Statement, Affidavit, FIR, Charge Sheet, Commercial Contract, etc.) and return ONLY a valid JSON object with this exact industry-standard structure:
 {
-  "document_type": "<e.g. FIR, Court Order, Affidavit, Contract, Bail Application, Petition>",
-  "summary": "<3-4 sentence plain-English summary of the document>",
-  "key_points": ["<point 1>", "<point 2>", "<point 3>", "<point 4>", "<point 5>"],
-  "parties_involved": ["<party 1>", "<party 2>"],
-  "important_dates": [{"label": "<label>", "date": "<date>"}],
-  "risk_flags": ["<risk 1>", "<risk 2>", "<risk 3>"],
-  "legal_implications": ["<implication 1>", "<implication 2>", "<implication 3>"],
-  "applicable_laws": ["<IPC/CPC section 1>", "<law 2>"],
-  "action_items": ["<action 1>", "<action 2>", "<action 3>"],
+  "document_type": "<Specific document type, e.g., FIR, Plaint, Commercial Lease, Bail Application, Notice>",
+  "jurisdiction": "<Identified court, tribunal, governing law jurisdiction, or 'Not Specified'>",
+  "executive_summary": "<Professional, concise 3-4 sentence summary of the core issue>",
+  "parties_involved": [{"name": "<party name>", "type": "<e.g., Plaintiff, Defendant, Petitioner, Respondent>"}],
+  "key_arguments_or_claims": ["<Argument/Claim 1>", "<Argument/Claim 2>"],
+  "statutory_provisions": ["<e.g., Section 420 IPC, Order VII Rule 1 CPC>"],
+  "evidentiary_support": ["<Evidence/Annexure 1 mentioned>", "<Evidence/Annexure 2 mentioned>"],
+  "critical_deadlines": [{"event": "<e.g., Next Hearing, Reply filing>", "date": "<date/timeframe>"}],
+  "procedural_defects": ["<Identified defects, e.g., missing signatures, incorrect format, missing annexures, etc.>"],
   "overall_risk_level": "High" | "Medium" | "Low",
-  "lawyer_advice": "<specific advice for the lawyer handling this document>"
+  "risk_assessment": ["<Critical Risk 1>", "<Critical Risk 2>"],
+  "strategic_recommendations": ["<Actionable legal step 1>", "<Actionable legal step 2>"]
 }`;
 
 async function analyzeDocument(text) {
@@ -41,6 +45,30 @@ async function analyzeDocument(text) {
   const data = await res.json();
   if (!res.ok) throw new Error(data?.error?.message || "Analysis failed");
   return JSON.parse(data.choices[0].message.content);
+}
+
+async function analyzeImage(base64, mimeType) {
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_API_KEY}` },
+    body: JSON.stringify({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      messages: [{
+        role: "user",
+        content: [
+          { type: "text", text: `You are a senior Indian legal analyst. Analyze this legal document image and return ONLY a valid JSON object:\n${SYSTEM_PROMPT.split("industry-standard structure:")[1]}` },
+          { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+        ],
+      }],
+      temperature: 0.2, max_tokens: 1800,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message || "Image analysis failed");
+  const content = data.choices[0].message.content;
+  const match = content.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("Could not parse AI response");
+  return JSON.parse(match[0]);
 }
 
 const riskColors = { High: "#dc2626", Medium: "#d97706", Low: "#16a34a" };
@@ -78,18 +106,36 @@ function ListBlock({ items, icon = "•", color = "#374151" }) {
 
 export default function DocAnalyzer({ fileName, onClose }) {
   const [text, setText]       = useState("");
+  const [file, setFile]       = useState(null);
   const [result, setResult]   = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
   const handleAnalyze = async () => {
-    if (!text.trim() || text.trim().length < 50) {
-      setError("Please paste at least 50 characters of document text.");
+    if (!file && (!text.trim() || text.trim().length < 50)) {
+      setError("Please paste at least 50 characters or select a file to analyze.");
       return;
     }
     setLoading(true); setError(""); setResult(null);
     try {
-      const r = await analyzeDocument(text);
+      let r;
+      if (file) {
+        if (isImage(file)) {
+          const b64 = await toBase64(file);
+          r = await analyzeImage(b64, file.type);
+        } else if (isPdf(file)) {
+          const extracted = await extractTextFromPDF(file);
+          if (!extracted || extracted.trim().length < 15) throw new Error("Could not extract text from this PDF.");
+          r = await analyzeDocument(extracted);
+        } else if (isText(file)) {
+          const extracted = await readAsText(file);
+          r = await analyzeDocument(extracted);
+        } else {
+          throw new Error("Unsupported file type.");
+        }
+      } else {
+        r = await analyzeDocument(text);
+      }
       setResult(r);
     } catch (e) {
       setError(`AI analysis failed: ${e.message}`);
@@ -142,20 +188,39 @@ export default function DocAnalyzer({ fileName, onClose }) {
             {!result && (
               <div>
                 <p style={{ fontSize: "0.83rem", color: "#374151", fontWeight: 600, marginBottom: 6 }}>
-                  Paste the document text below:
+                  Option 1: Upload a document (PDF, Image, Text)
                 </p>
-                <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginBottom: 10, lineHeight: 1.5 }}>
-                  Open the document, select all text (Ctrl+A), copy (Ctrl+C), and paste here. Works with FIRs, court orders, contracts, affidavits, and more.
+                <div style={{ marginBottom: 20, border: "2px dashed #c7d2fe", borderRadius: 12, padding: 16, textAlign: "center", background: "#f8faff" }}>
+                  <input type="file" id="da-file-upload" style={{ display: "none" }} accept="application/pdf,image/*,.txt" onChange={(e) => { setFile(e.target.files[0]); setText(""); }} />
+                  <label htmlFor="da-file-upload" style={{ cursor: "pointer", display: "block" }}>
+                    <span style={{ fontSize: "1.2rem" }}>📄</span>
+                    <p style={{ margin: "6px 0 0", fontSize: "0.85rem", fontWeight: 700, color: "#1a2744" }}>{file ? file.name : "Click to select a file"}</p>
+                    {!file && <p style={{ margin: 0, fontSize: "0.75rem", color: "#9ca3af" }}>Supports PDFs, Images, and Text files</p>}
+                  </label>
+                  {file && <button onClick={() => setFile(null)} style={{ background: "none", border: "none", color: "#dc2626", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", marginTop: 6 }}>Remove File</button>}
+                </div>
+
+                <div style={{ textAlign: "center", position: "relative", margin: "20px 0" }}>
+                  <hr style={{ border: "none", borderTop: "1px solid #e5e7eb", margin: 0 }} />
+                  <span style={{ background: "white", padding: "0 10px", color: "#9ca3af", fontSize: "0.8rem", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>OR</span>
+                </div>
+
+                <p style={{ fontSize: "0.83rem", color: "#374151", fontWeight: 600, marginBottom: 6 }}>
+                  Option 2: Paste document text
                 </p>
                 <textarea
                   className="da-textarea"
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
+                  onChange={(e) => { setText(e.target.value); setFile(null); }}
                   placeholder="Paste document text here... e.g. FIR copy, court order, bail application, contract, affidavit..."
+                  disabled={!!file}
+                  style={{ opacity: file ? 0.5 : 1 }}
                 />
                 <p style={{ fontSize: "0.72rem", color: "#9ca3af", textAlign: "right", margin: "4px 0 0" }}>{text.length} characters</p>
+                
                 {error && <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 10, padding: "10px 14px", color: "#991b1b", fontSize: "0.8rem", marginTop: 10 }}>⚠️ {error}</div>}
-                <button className="da-btn" onClick={handleAnalyze} disabled={loading || !text.trim()}>
+                
+                <button className="da-btn" onClick={handleAnalyze} disabled={loading || (!file && !text.trim())}>
                   {loading ? "Analyzing..." : "🔍 Analyze Document"}
                 </button>
               </div>
@@ -176,7 +241,7 @@ export default function DocAnalyzer({ fileName, onClose }) {
                 {/* Top bar */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
                   <div>
-                    <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.8px" }}>Document Type</span>
+                    <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.8px" }}>Jurisdiction: {result.jurisdiction || "Not Specified"}</span>
                     <p style={{ fontFamily: "'Playfair Display', serif", color: "#1a2744", fontWeight: 700, margin: "2px 0 0", fontSize: "1rem" }}>{result.document_type}</p>
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -190,29 +255,53 @@ export default function DocAnalyzer({ fileName, onClose }) {
                 </div>
 
                 {/* Summary */}
-                <Block title="Summary" icon="📋">
-                  <p style={{ fontSize: "0.84rem", color: "#374151", lineHeight: 1.7, margin: 0 }}>{result.summary}</p>
-                </Block>
-
-                {/* Key Points */}
-                <Block title="Key Points" icon="🔑">
-                  <ListBlock items={result.key_points} icon="→" />
+                <Block title="Executive Summary" icon="📋">
+                  <p style={{ fontSize: "0.84rem", color: "#374151", lineHeight: 1.7, margin: 0 }}>{result.executive_summary}</p>
                 </Block>
 
                 {/* Parties */}
                 {(result.parties_involved || []).length > 0 && (
                   <Block title="Parties Involved" icon="👥">
-                    <div>{(result.parties_involved || []).map((p, i) => <Tag key={i} text={p} color="#1a2744" bg="#eef2ff" />)}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {(result.parties_involved || []).map((p, i) => (
+                        <Tag key={i} text={`${p.name} (${p.type})`} color="#1a2744" bg="#eef2ff" />
+                      ))}
+                    </div>
+                  </Block>
+                )}
+
+                {/* Key Arguments / Claims */}
+                {(result.key_arguments_or_claims || []).length > 0 && (
+                  <Block title="Key Arguments / Claims" icon="⚖️">
+                    <ListBlock items={result.key_arguments_or_claims} icon="→" />
+                  </Block>
+                )}
+
+                {/* Statutory Provisions */}
+                {(result.statutory_provisions || []).length > 0 && (
+                  <Block title="Statutory Provisions" icon="📜">
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {(result.statutory_provisions || []).map((l, i) => (
+                        <Tag key={i} text={l} color="#4338ca" bg="#eef2ff" />
+                      ))}
+                    </div>
+                  </Block>
+                )}
+
+                {/* Evidentiary Support */}
+                {(result.evidentiary_support || []).length > 0 && (
+                  <Block title="Evidentiary Support" icon="📎">
+                    <ListBlock items={result.evidentiary_support} icon="•" color="#374151" />
                   </Block>
                 )}
 
                 {/* Important Dates */}
-                {(result.important_dates || []).length > 0 && (
-                  <Block title="Important Dates & Deadlines" icon="📅">
+                {(result.critical_deadlines || []).length > 0 && (
+                  <Block title="Critical Deadlines" icon="📅">
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {result.important_dates.map((d, i) => (
+                      {result.critical_deadlines.map((d, i) => (
                         <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem" }}>
-                          <span style={{ color: "#6b7280" }}>{d.label}</span>
+                          <span style={{ color: "#6b7280" }}>{d.event}</span>
                           <strong style={{ color: "#1a2744" }}>{d.date}</strong>
                         </div>
                       ))}
@@ -220,39 +309,38 @@ export default function DocAnalyzer({ fileName, onClose }) {
                   </Block>
                 )}
 
-                {/* Risk Flags */}
-                <Block title="Risk Flags" icon="⚠️">
-                  <ListBlock items={result.risk_flags} icon="🔴" color="#dc2626" />
-                </Block>
+                {/* Risk Flags & Procedural Defects */}
+                {((result.risk_assessment || []).length > 0 || (result.procedural_defects || []).length > 0) && (
+                  <Block title="Risk Assessment & Defects" icon="⚠️">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {result.risk_assessment?.length > 0 && (
+                        <div>
+                          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b", margin: "0 0 6px" }}>PRIMARY RISKS:</p>
+                          <ListBlock items={result.risk_assessment} icon="🔴" color="#dc2626" />
+                        </div>
+                      )}
+                      {result.procedural_defects?.length > 0 && (
+                        <div>
+                          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#d97706", margin: "0 0 6px" }}>PROCEDURAL DEFECTS:</p>
+                          <ListBlock items={result.procedural_defects} icon="⚠️" color="#b45309" />
+                        </div>
+                      )}
+                    </div>
+                  </Block>
+                )}
 
-                {/* Legal Implications */}
-                <Block title="Legal Implications" icon="⚖️">
-                  <ListBlock items={result.legal_implications} icon="→" />
-                </Block>
-
-                {/* Applicable Laws */}
-                <Block title="Applicable Laws & Sections" icon="📜">
-                  <div>{(result.applicable_laws || []).map((l, i) => <Tag key={i} text={l} color="#4338ca" bg="#eef2ff" />)}</div>
-                </Block>
-
-                {/* Action Items */}
-                <Block title="Action Items" icon="🎯">
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {(result.action_items || []).map((a, i) => (
-                      <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                        <span style={{ background: "#c9a84c", color: "white", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: 800, flexShrink: 0, marginTop: 2 }}>{i + 1}</span>
-                        <span style={{ fontSize: "0.83rem", color: "#1a2744", lineHeight: 1.55 }}>{a}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Block>
-
-                {/* Lawyer Advice */}
-                {result.lawyer_advice && (
-                  <div style={{ background: "linear-gradient(135deg,#fef3c7,#fef9ee)", border: "2px solid #c9a84c", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-                    <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "#92400e", margin: "0 0 8px" }}>💡 Lawyer's Note</p>
-                    <p style={{ fontSize: "0.84rem", color: "#1a2744", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{result.lawyer_advice}</p>
-                  </div>
+                {/* Strategic Recommendations */}
+                {(result.strategic_recommendations || []).length > 0 && (
+                  <Block title="Strategic Recommendations" icon="🎯">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {(result.strategic_recommendations || []).map((a, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                          <span style={{ background: "#c9a84c", color: "white", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: 800, flexShrink: 0, marginTop: 2 }}>{i + 1}</span>
+                          <span style={{ fontSize: "0.83rem", color: "#1a2744", lineHeight: 1.55 }}>{a}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Block>
                 )}
 
                 <p style={{ fontSize: "0.7rem", color: "#9ca3af", textAlign: "center", lineHeight: 1.5, marginTop: 8 }}>

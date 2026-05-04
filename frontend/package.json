@@ -8,6 +8,7 @@
     "axios": "^1.4.0",
     "bootstrap": "^5.3.8",
     "firebase": "^9.23.0",
+    "pdfjs-dist": "^5.7.284",
     "react": "^18.2.0",
     "react-bootstrap": "^2.8.0",
     "react-dom": "^18.2.0",
