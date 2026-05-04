@@ -176,6 +176,16 @@ export default function AddCaseModal({ onClose, advocateNumber: propAdvocateNumb
             case_title: caseData.title,
             category: caseData.category,
             status: caseData.status || "Open",
+            court_name: caseData.courtName || "Not Specified",
+            next_hearing_date: caseData.next_hearing_date || "Not Scheduled",
+            stage: caseData.stage || "Not Specified",
+            priority: caseData.priority || "Medium",
+            filing_date: caseData.filingDate || "Not Specified",
+            opposing_party: caseData.opposingParty || "None",
+            opposing_counsel: caseData.opposingCounsel || "None",
+            ipc_sections: caseData.ipcSections || "None",
+            fir_number: caseData.firNumber || "None",
+            description: caseData.description || "No description provided.",
           },
           EJS_PUBLIC
         );
