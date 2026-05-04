@@ -1,5 +1,5 @@
 // src/components/Case/DocAnalyzer.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { extractTextFromPDF } from "../../utils/pdfParser";
 import { toBase64, readAsText, isPdf, isImage, isText } from "../../utils/fileUtils";
@@ -104,37 +104,60 @@ function ListBlock({ items, icon = "•", color = "#374151" }) {
   );
 }
 
-export default function DocAnalyzer({ fileName, onClose }) {
+export default function DocAnalyzer({ fileName, fileUrl, onClose }) {
   const [text, setText]       = useState("");
   const [file, setFile]       = useState(null);
   const [result, setResult]   = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
-  const handleAnalyze = async () => {
-    if (!file && (!text.trim() || text.trim().length < 50)) {
-      setError("Please paste at least 50 characters or select a file to analyze.");
-      return;
+  useEffect(() => {
+    if (fileUrl) {
+      const autoFetchAndAnalyze = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+          const response = await fetch(fileUrl);
+          if (!response.ok) throw new Error("Failed to fetch document from cloud.");
+          const blob = await response.blob();
+          
+          let type = blob.type;
+          const ext = fileName?.split('.').pop()?.toLowerCase();
+          if (ext === 'pdf') type = "application/pdf";
+          if (["jpg","jpeg","png"].includes(ext)) type = `image/${ext}`;
+          if (ext === 'txt') type = "text/plain";
+          
+          const autoFile = new File([blob], fileName || "document", { type });
+          setFile(autoFile);
+          await performAnalysis(autoFile, null);
+        } catch (e) {
+          setError(`Auto-analysis failed: ${e.message}`);
+          setLoading(false);
+        }
+      };
+      autoFetchAndAnalyze();
     }
+  }, [fileUrl, fileName]);
+
+  const performAnalysis = async (targetFile, targetText) => {
     setLoading(true); setError(""); setResult(null);
     try {
       let r;
-      if (file) {
-        if (isImage(file)) {
-          const b64 = await toBase64(file);
-          r = await analyzeImage(b64, file.type);
-        } else if (isPdf(file)) {
-          const extracted = await extractTextFromPDF(file);
+      if (targetFile) {
+        if (isImage(targetFile)) {
+          const b64 = await toBase64(targetFile);
+          r = await analyzeImage(b64, targetFile.type);
+        } else if (isPdf(targetFile)) {
+          const extracted = await extractTextFromPDF(targetFile);
           if (!extracted || extracted.trim().length < 15) throw new Error("Could not extract text from this PDF.");
           r = await analyzeDocument(extracted);
-        } else if (isText(file)) {
-          const extracted = await readAsText(file);
+        } else if (isText(targetFile)) {
+          const extracted = await readAsText(targetFile);
           r = await analyzeDocument(extracted);
         } else {
-          throw new Error("Unsupported file type.");
+          throw new Error("Unsupported file type. Use PDFs, Images, or Text files.");
         }
       } else {
-        r = await analyzeDocument(text);
+        r = await analyzeDocument(targetText);
       }
       setResult(r);
     } catch (e) {
@@ -142,6 +165,14 @@ export default function DocAnalyzer({ fileName, onClose }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAnalyze = () => {
+    if (!file && (!text.trim() || text.trim().length < 50)) {
+      setError("Please paste at least 50 characters or select a file to analyze.");
+      return;
+    }
+    performAnalysis(file, text);
   };
 
   return (

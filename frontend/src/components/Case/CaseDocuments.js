@@ -228,6 +228,7 @@ export default function CaseDocuments({ caseId, isLawyer }) {
       {activeAnalysis && (
         <DocAnalyzer
           fileName={activeAnalysis.name}
+          fileUrl={activeAnalysis.url}
           onClose={() => setActiveAnalysis(null)}
         />
       )}
