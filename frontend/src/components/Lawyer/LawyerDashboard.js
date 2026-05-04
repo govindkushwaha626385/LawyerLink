@@ -92,8 +92,8 @@ export default function LawyerDashboard() {
           display: flex; align-items: center; gap: 8px;
           box-shadow: 0 4px 16px rgba(26,39,68,0.25);
         }
-        .ld-add-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,39,68,0.35); }
-
+        .ld-add-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,39,68,0.35); }
+        .ld-add-btn:disabled { background: #9ca3af; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
         /* Stats */
         .ld-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 36px; }
         .ld-stat-card {
@@ -220,7 +220,12 @@ export default function LawyerDashboard() {
                 </div>
               )}
             </div>
-            <button className="ld-add-btn" onClick={() => setShowModal(true)}>
+            <button 
+              className="ld-add-btn" 
+              onClick={() => setShowModal(true)}
+              disabled={verificationStatus !== "approved"}
+              title={verificationStatus !== "approved" ? "You must be fully verified by an admin to add a case." : "Add New Case"}
+            >
               ＋ Add New Case
             </button>
           </div>
@@ -398,19 +403,32 @@ export default function LawyerDashboard() {
           </div>
 
           {/* ── Consultations ── */}
-          <div className="ld-section">
-            <div className="ld-section-header">
-              <h3 className="ld-section-title">
-                📅 Consultations
-                {pendingConsultations > 0 && (
-                  <span style={{ background: "#fee2e2", color: "#dc2626", borderRadius: 50, padding: "2px 12px", fontSize: ".75rem", fontWeight: 700 }}>
-                    {pendingConsultations} pending
-                  </span>
-                )}
-              </h3>
+          {verificationStatus === "approved" ? (
+            <div className="ld-section">
+              <div className="ld-section-header">
+                <h3 className="ld-section-title">
+                  📅 Consultations
+                  {pendingConsultations > 0 && (
+                    <span style={{ background: "#fee2e2", color: "#dc2626", borderRadius: 50, padding: "2px 12px", fontSize: ".75rem", fontWeight: 700 }}>
+                      {pendingConsultations} pending
+                    </span>
+                  )}
+                </h3>
+              </div>
+              <MyConsultations />
             </div>
-            <MyConsultations />
-          </div>
+          ) : (
+            <div className="ld-section" style={{ background: "#f9fafb", opacity: 0.6, pointerEvents: "none" }}>
+              <div className="ld-section-header">
+                <h3 className="ld-section-title">📅 Consultations <span style={{fontSize: ".8rem", color: "#6b7280", fontWeight: 500}}>(Locked)</span></h3>
+              </div>
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <p style={{ fontSize: "2rem", margin: "0 0 10px" }}>🔒</p>
+                <p style={{ margin: 0, color: "#4b5563", fontWeight: 600 }}>Consultations are locked.</p>
+                <p style={{ margin: "4px 0 0", fontSize: ".8rem", color: "#6b7280" }}>You must be fully verified by an admin to receive or manage consultations.</p>
+              </div>
+            </div>
+          )}
 
           {/* ── Analytics ── */}
           {cases.length > 0 && (

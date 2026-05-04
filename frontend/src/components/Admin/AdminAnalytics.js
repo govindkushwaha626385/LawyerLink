@@ -55,8 +55,8 @@ function ChartCard({ title, icon, children, full }) {
 export default function AdminAnalytics({ lawyers, litigants, cases, reviews }) {
   const stats = useMemo(() => {
     const total  = lawyers.length + litigants.length;
-    const verified = lawyers.filter(l => l.verified).length;
-    const pending  = lawyers.filter(l => !l.verified).length;
+    const verified = lawyers.filter(l => l.verificationStatus === "approved" || (l.verified && !l.verificationStatus)).length;
+    const pending  = lawyers.filter(l => l.verificationStatus === "pending" || (!l.verified && !l.verificationStatus)).length;
 
     // Case stats
     const openCases  = cases.filter(c => c.status === "Open").length;

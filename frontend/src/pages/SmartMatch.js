@@ -54,13 +54,15 @@ export default function SmartMatch() {
   // Filters
   const [filterLocation, setFilterLocation] = useState("");
   const [filterExp, setFilterExp]           = useState("");
-  const [filterVerified, setFilterVerified] = useState(false);
 
   useEffect(() => {
     const fetch_ = async () => {
       const q = query(collection(db, "users"), where("role", "==", "lawyer"));
       const snap = await getDocs(q);
-      setLawyers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const lawyerList = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter((u) => u.verificationStatus === "approved" || (u.verified && !u.verificationStatus));
+      setLawyers(lawyerList);
     };
     fetch_();
   }, []);
@@ -70,7 +72,6 @@ export default function SmartMatch() {
     setLoading(true); setSearched(true);
     try {
       let pool = [...lawyers];
-      if (filterVerified) pool = pool.filter(l => l.verified);
       if (filterLocation) pool = pool.filter(l => l.address?.toLowerCase().includes(filterLocation.toLowerCase()));
       if (filterExp)      pool = pool.filter(l => (l.experience || 0) >= parseInt(filterExp));
 
@@ -169,10 +170,6 @@ export default function SmartMatch() {
                 <option value="5">5+ years</option>
                 <option value="10">10+ years</option>
               </select>
-              <label className="sm-filter-check">
-                <input type="checkbox" checked={filterVerified} onChange={e => setFilterVerified(e.target.checked)} />
-                ✅ Verified Only
-              </label>
             </div>
 
             <div className="sm-footer">

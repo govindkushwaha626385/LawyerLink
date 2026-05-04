@@ -18,7 +18,8 @@ export default function LawyersCatalog() {
       const snapshot = await getDocs(collection(db, "users"));
       const lawyerList = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((u) => u.role === "lawyer");
+        .filter((u) => u.role === "lawyer")
+        .filter((u) => u.verificationStatus === "approved" || (u.verified && !u.verificationStatus));
       setLawyers(lawyerList);
       setFiltered(lawyerList);
     };
@@ -37,12 +38,12 @@ export default function LawyersCatalog() {
 
   const initials = (name) => name ? name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "??";
   const pastelBg = (name) => {
-    const colors = ["#eef2ff","#f0fdf4","#fff7ed","#fdf4ff","#f0f9ff","#fef9c3"];
+    const colors = ["#eef2ff", "#f0fdf4", "#fff7ed", "#fdf4ff", "#f0f9ff", "#fef9c3"];
     const idx = (name?.charCodeAt(0) || 0) % colors.length;
     return colors[idx];
   };
   const pastelText = (name) => {
-    const colors = ["#4338ca","#15803d","#c2410c","#9333ea","#0369a1","#854d0e"];
+    const colors = ["#4338ca", "#15803d", "#c2410c", "#9333ea", "#0369a1", "#854d0e"];
     const idx = (name?.charCodeAt(0) || 0) % colors.length;
     return colors[idx];
   };
