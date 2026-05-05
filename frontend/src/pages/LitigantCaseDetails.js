@@ -230,6 +230,9 @@ export default function LitigantCaseDetails() {
                     <div className="lcd-info-grid">
                       <div><p className="lcd-info-label">Advocate No.</p><p className="lcd-info-value">{caseData.advocateNumber || "N/A"}</p></div>
                       <div><p className="lcd-info-label">Email</p><p className="lcd-info-value">{lawyerData?.email || "N/A"}</p></div>
+                      {lawyerData?.city && <div><p className="lcd-info-label">City</p><p className="lcd-info-value">{lawyerData.city}</p></div>}
+                      {lawyerData?.court && <div><p className="lcd-info-label">Primary Court</p><p className="lcd-info-value">{lawyerData.court}</p></div>}
+                      {lawyerData?.languages?.length > 0 && <div><p className="lcd-info-label">Languages</p><p className="lcd-info-value">{lawyerData.languages.join(", ")}</p></div>}
                     </div>
                     <div className="lcd-contact-row">
                       <a href={`mailto:${lawyerData?.email}`} className="lcd-contact-btn lcd-btn-email">✉️ Email</a>

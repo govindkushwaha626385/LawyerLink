@@ -541,6 +541,7 @@ export default function AdminPanel() {
                     <tr>
                       <th>Lawyer</th>
                       <th>Specialization</th>
+                      <th>City</th>
                       <th>Advocate #</th>
                       <th>Experience</th>
                       <th>Cases</th>
@@ -562,6 +563,7 @@ export default function AdminPanel() {
                           </div>
                         </td>
                         <td>{l.category||"—"}</td>
+                        <td>{l.city||"—"}</td>
                         <td style={{fontFamily:"monospace",fontSize:".78rem"}}>{l.advocateNumber||"—"}</td>
                         <td>{l.experience ? l.experience+" yrs" : "—"}</td>
                         <td>
