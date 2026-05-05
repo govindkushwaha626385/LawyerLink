@@ -69,6 +69,10 @@ export default function CaseDocuments({ caseId, isLawyer }) {
       setUploadError(`"${file.name}" is too large (max 10 MB).`);
       return;
     }
+    if (!file.type.startsWith("image/")) {
+      setUploadError(`"${file.name}" is not a supported image format. Only JPG and PNG are allowed.`);
+      return;
+    }
 
     setUploadError("");
     setUploading(true);
@@ -166,9 +170,9 @@ export default function CaseDocuments({ caseId, isLawyer }) {
     <div className={`docs-upload-zone ${uploading ? "docs-uploading" : ""}`}>
       <div className="docs-upload-cloud">☁️</div>
       <p className="docs-upload-title">{label}</p>
-      <p className="docs-upload-sub">PDF, Word, Excel, Images · Max 10 MB</p>
+      <p className="docs-upload-sub">Images Only (JPG, PNG) · Max 10 MB</p>
       <input ref={fileInputRef} type="file" style={{ display: "none" }}
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xls,.xlsx,.txt,.zip"
+        accept=".jpg,.jpeg,.png"
         onChange={handleUpload} />
       <button className="docs-upload-btn"
         onClick={() => { setUploadError(""); fileInputRef.current?.click(); }}

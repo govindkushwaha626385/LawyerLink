@@ -330,7 +330,7 @@ export default function AdminPanel() {
                 ["Phone",             selectedLawyer.phone || "—"],
                 ["City",              selectedLawyer.city || "—"],
                 ["Court",             selectedLawyer.court || "—"],
-                ["Languages",         selectedLawyer.languages || "—"],
+                ["Languages",         (selectedLawyer.languages && selectedLawyer.languages.length > 0) ? selectedLawyer.languages.join(", ") : "—"],
                 ["Rating",            selectedLawyer.rating ? `⭐ ${selectedLawyer.rating} (${selectedLawyer.reviewCount || 0} reviews)` : "No reviews"],
                 ["Cases Handled",     cases.filter(c => c.lawyerEmail === selectedLawyer.email).length + " cases"],
               ].map(([k, v]) => (

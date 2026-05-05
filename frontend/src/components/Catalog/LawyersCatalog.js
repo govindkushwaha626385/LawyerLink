@@ -30,7 +30,10 @@ export default function LawyersCatalog() {
     let result = lawyers;
     if (search.trim()) result = result.filter(l => l.fullName?.toLowerCase().includes(search.toLowerCase()));
     if (category) result = result.filter(l => l.category === category);
-    if (location.trim()) result = result.filter(l => l.address?.toLowerCase().includes(location.toLowerCase()));
+    if (location.trim()) {
+      const loc = location.toLowerCase();
+      result = result.filter(l => l.address?.toLowerCase().includes(loc) || l.city?.toLowerCase().includes(loc));
+    }
     setFiltered(result);
   }, [lawyers, search, category, location]);
 
@@ -200,6 +203,9 @@ export default function LawyersCatalog() {
 
                   <div className="cat-card-body">
                     <p className="cat-meta">⏱️ <strong>{lawyer.experience || 0}</strong> years experience</p>
+                    {lawyer.city && <p className="cat-meta">🌆 <strong>{lawyer.city}</strong></p>}
+                    {lawyer.court && <p className="cat-meta">🏛️ {lawyer.court}</p>}
+                    {lawyer.languages && lawyer.languages.length > 0 && <p className="cat-meta">🗣️ {lawyer.languages.join(", ")}</p>}
                     <p className="cat-meta">📍 {lawyer.address?.split(",")[0] || "Location not specified"}</p>
                     <p className="cat-meta">📧 {lawyer.email}</p>
                     {lawyer.phone && <p className="cat-meta">📞 {lawyer.phone}</p>}

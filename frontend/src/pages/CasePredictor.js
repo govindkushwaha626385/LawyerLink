@@ -144,7 +144,7 @@ function VerdictOrb({ verdict }) {
         borderRadius: 50, padding: "6px 20px", fontWeight: 700, fontSize: "1rem",
         border: `1.5px solid ${v.color}33`,
       }}>
-        Predicted: {verdict}
+        {/* {verdict} */}
       </div>
     </div>
   );

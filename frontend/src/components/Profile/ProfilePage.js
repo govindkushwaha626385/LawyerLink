@@ -22,8 +22,14 @@ export default function ProfilePage() {
     return () => unsubscribe();
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
+  const handleChange = (e) => {
+    if (e.target.name === "languages") {
+      const options = Array.from(e.target.selectedOptions, option => option.value);
+      setForm({ ...form, languages: options });
+    } else {
+      setForm({ ...form, [e.target.name]: e.target.value });
+    }
+  };
   const handleUpdate = async () => {
     setSaving(true);
     try {
@@ -217,6 +223,23 @@ export default function ProfilePage() {
                         <input className="pr-input" value={new Date(form.registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })} disabled style={{ opacity: 0.6, cursor: "not-allowed" }} />
                       </div>
                     )}
+                    <div className="pr-edit-grid">
+                      <div>
+                        <label className="pr-label">City</label>
+                        <input className="pr-input" name="city" value={form.city || ""} onChange={handleChange} placeholder="e.g. Delhi" />
+                      </div>
+                      <div>
+                        <label className="pr-label">Primary Court</label>
+                        <input className="pr-input" name="court" value={form.court || ""} onChange={handleChange} placeholder="e.g. Delhi High Court" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="pr-label">Languages Spoken (Cmd/Ctrl + Click to select multiple)</label>
+                      <select className="pr-input" name="languages" multiple style={{ height: "100px", padding: "8px" }} value={form.languages || []} onChange={handleChange}>
+                        {["English", "Hindi", "Marathi", "Gujarati", "Tamil", "Telugu", "Bengali", "Kannada", "Malayalam", "Punjabi", "Urdu"]
+                      .map(l => <option key={l} value={l} style={{ padding: "4px 8px", cursor: "pointer" }}>{l}</option>)}
+                      </select>
+                    </div>
                     <div>
                       <label className="pr-label">Specialization / Category</label>
                       <select className="pr-input" name="category" value={form.category || ""} onChange={handleChange}>
@@ -261,6 +284,9 @@ export default function ProfilePage() {
                       <InfoRow label="Advocate Number" value={userData.advocateNumber} />
                       <InfoRow label="Specialization" value={userData.category} />
                       <InfoRow label="Cases Handled" value={userData.casesHandled || "0"} />
+                      <InfoRow label="City" value={userData.city} />
+                      <InfoRow label="Primary Court" value={userData.court} />
+                      <InfoRow label="Languages" value={userData.languages?.length ? userData.languages.join(", ") : null} />
                       {userData.registrationDate && (
                         <InfoRow
                           label="Bar Council Registration Date"

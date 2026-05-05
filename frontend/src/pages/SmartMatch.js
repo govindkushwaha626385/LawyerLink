@@ -14,7 +14,9 @@ async function runAIMatch(problem, lawyers) {
     name: l.fullName || "Lawyer",
     category: l.category || "General Practice",
     experience: l.experience || 0,
-    location: l.address?.split(",")[0] || "India",
+    location: l.city || l.address?.split(",")[0] || "India",
+    court: l.court || "Any Court",
+    languages: l.languages || [],
     verified: l.verified || false,
     rating: l.rating || 0,
   }));
@@ -72,7 +74,10 @@ export default function SmartMatch() {
     setLoading(true); setSearched(true);
     try {
       let pool = [...lawyers];
-      if (filterLocation) pool = pool.filter(l => l.address?.toLowerCase().includes(filterLocation.toLowerCase()));
+      if (filterLocation) {
+        const loc = filterLocation.toLowerCase();
+        pool = pool.filter(l => l.address?.toLowerCase().includes(loc) || l.city?.toLowerCase().includes(loc));
+      }
       if (filterExp)      pool = pool.filter(l => (l.experience || 0) >= parseInt(filterExp));
 
       const parsed   = await runAIMatch(problem, pool);
@@ -86,7 +91,7 @@ export default function SmartMatch() {
     finally { setLoading(false); }
   };
 
-  const locations = [...new Set(lawyers.map(l => l.address?.split(",")[0]).filter(Boolean))];
+  const locations = [...new Set(lawyers.map(l => l.city || l.address?.split(",")[0]).filter(Boolean))];
 
   return (
     <>
@@ -225,6 +230,9 @@ export default function SmartMatch() {
                         <h3 className="sm-name">{l.fullName}</h3>
                         <p className="sm-cat">{l.category || "General Practice"}</p>
                         <p className="sm-meta">⏱️ {l.experience || 0} years experience</p>
+                        {l.city && <p className="sm-meta">🌆 {l.city}</p>}
+                        {l.court && <p className="sm-meta">🏛️ {l.court}</p>}
+                        {l.languages && l.languages.length > 0 && <p className="sm-meta">🗣️ {l.languages.join(", ")}</p>}
                         <p className="sm-meta">📍 {l.address?.split(",")[0] || "India"}</p>
                         {l.registrationDate && (
                           <p className="sm-meta">📅 Reg: {new Date(l.registrationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>

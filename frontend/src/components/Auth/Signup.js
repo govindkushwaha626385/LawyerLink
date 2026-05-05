@@ -48,7 +48,7 @@ export default function Signup() {
   const [certFile, setCertFile]         = useState(null);
   const [certName, setCertName]         = useState("");
   const [formData, setFormData]         = useState({
-    fullName: "", phone: "", address: "",
+    fullName: "", phone: "", address: "", city: "", court: "", languages: [],
     experience: "", category: "", advocateNumber: "",
     registrationDate: "",
   });
@@ -63,8 +63,14 @@ export default function Signup() {
   const role           = new URLSearchParams(location.search).get("role") || "litigant";
   const isLawyer       = role === "lawyer";
 
-  const handleChange = (e) =>
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    if (e.target.name === "languages") {
+      const options = Array.from(e.target.selectedOptions, option => option.value);
+      setFormData(prev => ({ ...prev, languages: options }));
+    } else {
+      setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    }
+  };
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
@@ -203,6 +209,9 @@ export default function Signup() {
           category:              formData.category         || "",
           advocateNumber:        formData.advocateNumber.trim().toUpperCase(),
           registrationDate:      formData.registrationDate || "",
+          city:                  formData.city             || "",
+          court:                 formData.court            || "",
+          languages:             formData.languages        || [],
           casesHandled:          0,
           rating:                0,
           verified:              false,          // Admin must approve
@@ -449,6 +458,28 @@ export default function Signup() {
                 <span style={{ fontSize: ".7rem", color: "#6b7280", marginTop: 4 }}>
                   Must match the Bar Council records exactly.
                 </span>
+              </div>
+
+              <div className="sw-row">
+                <div className="sw-field">
+                  <label className="sw-label">City</label>
+                  <input className="sw-input" type="text" placeholder="e.g. Delhi"
+                    name="city" value={formData.city} onChange={handleChange} />
+                </div>
+                <div className="sw-field">
+                  <label className="sw-label">Primary Court</label>
+                  <input className="sw-input" type="text" placeholder="e.g. Delhi High Court"
+                    name="court" value={formData.court} onChange={handleChange} />
+                </div>
+              </div>
+
+              <div className="sw-field">
+                <label className="sw-label">Languages Spoken (Cmd/Ctrl + Click to select multiple)</label>
+                <select className="sw-input" name="languages" multiple style={{ height: "100px", padding: "8px" }}
+                  value={formData.languages} onChange={handleChange}>
+                  {["English", "Hindi", "Marathi", "Gujarati", "Tamil", "Telugu", "Bengali", "Kannada", "Malayalam", "Punjabi", "Urdu"]
+                .map(l => <option key={l} value={l} style={{ padding: "4px 8px", cursor: "pointer" }}>{l}</option>)}
+                </select>
               </div>
 
               <div className="sw-field">
