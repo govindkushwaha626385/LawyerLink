@@ -121,6 +121,33 @@ export default function LitigantDashboard() {
         .lit-section-title { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: #1a2744; margin: 0; }
         .lit-count-badge { background: #eef2ff; color: #4338ca; border-radius: 50px; padding: 2px 12px; font-size: 0.75rem; font-weight: 700; }
 
+        /* Consultation cards */
+        .lc-card { padding: 18px 20px; border-radius: 16px; border: 1.5px solid #e5e7eb; background: white; cursor: pointer; transition: all .25s; }
+        .lc-card:hover { border-color: #c9a84c; box-shadow: 0 6px 20px rgba(201,168,76,.15); transform: translateY(-2px); }
+        .lc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+        /* Chat panel */
+        .lc-chat-panel { background: white; border-radius: 18px; border: 1.5px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 20px rgba(26,39,68,.07); }
+        .lc-chat-hd { background: linear-gradient(135deg, #1a2744, #243460); padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; }
+        .lc-chat-hd-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: white; margin: 0 0 2px; }
+        .lc-chat-hd-sub { font-size: .75rem; color: rgba(255,255,255,.55); margin: 0; }
+        .lc-chat-close { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 50px; padding: 4px 14px; font-size: .75rem; font-weight: 600; color: rgba(255,255,255,.8); cursor: pointer; font-family: 'Inter', sans-serif; }
+        .lc-chat-body { padding: 20px 22px; }
+        .lc-messages { border: 1px solid #e5e7eb; border-radius: 16px; padding: 14px; height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafbff; margin-bottom: 14px; }
+        .lc-messages::-webkit-scrollbar { width: 3px; }
+        .lc-messages::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+        .lc-bubble { max-width: 78%; padding: 10px 14px; border-radius: 18px; font-size: .84rem; line-height: 1.55; }
+        .lc-bubble-me { align-self: flex-end; background: #c9a84c; color: #1a2744; border-radius: 18px 18px 4px 18px; box-shadow: 0 2px 8px rgba(201,168,76,.25); }
+        .lc-bubble-lawyer { align-self: flex-start; background: #1a2744; color: white; border-radius: 18px 18px 18px 4px; box-shadow: 0 2px 8px rgba(26,39,68,.15); }
+        .lc-bubble-sender { font-size: .68rem; font-weight: 700; opacity: .7; margin: 0 0 3px; }
+        .lc-bubble-text { margin: 0; }
+        .lc-input-row { display: flex; gap: 10px; }
+        .lc-input { flex: 1; border: 1.5px solid #e5e7eb; border-radius: 50px; padding: 10px 18px; font-size: .85rem; font-family: 'Inter', sans-serif; outline: none; transition: border .2s; }
+        .lc-input:focus { border-color: #1a2744; }
+        .lc-send-btn { background: #1a2744; color: white; border: none; border-radius: 50px; padding: 10px 22px; font-size: .83rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; white-space: nowrap; }
+        .lc-send-btn:hover:not(:disabled) { background: #111b33; box-shadow: 0 4px 12px rgba(26,39,68,.25); }
+        .lc-send-btn:disabled { opacity: .6; cursor: not-allowed; }
+
         /* Case cards */
         .lit-case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .lit-case-card {
@@ -214,91 +241,90 @@ export default function LitigantDashboard() {
           {/* ── Consultations ── */}
           {consultations.length > 0 && (
             <div className="lit-section" style={{ marginBottom: 24 }}>
-              <div className="lit-section-header" style={{ marginBottom: 16 }}>
+              <div className="lit-section-header">
                 <h3 className="lit-section-title">🤝 My Consultations</h3>
+                <span className="lit-count-badge">{consultations.length}</span>
               </div>
-              <div style={{ display: "grid", gap: 14, gridTemplateColumns: activeCons ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }}>
-                {/* Active Chat Panel */}
-                {activeCons ? (
-                  <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #e5e7eb", padding: 24 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-                      <div>
-                        <h4 style={{ margin: "0 0 4px", color: "#1a2744", fontWeight: 700 }}>Chat with {activeCons.lawyerName}</h4>
-                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6b7280" }}>Regarding: {activeCons.caseType || "Legal Consultation"}</p>
-                      </div>
-                      <button onClick={() => setSelectedConsId(null)} style={{ background: "#f3f4f6", border: "none", borderRadius: 50, padding: "4px 14px", fontSize: "0.8rem", fontWeight: 600, color: "#374151", cursor: "pointer" }}>✕ Close</button>
+
+              {activeCons ? (
+                /* ─ Chat panel ─ */
+                <div className="lc-chat-panel">
+                  <div className="lc-chat-hd">
+                    <div>
+                      <p className="lc-chat-hd-name">Chat with {activeCons.lawyerName}</p>
+                      <p className="lc-chat-hd-sub">{activeCons.caseType || "Legal Consultation"} · {activeCons.status}</p>
                     </div>
-
-                    <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 16, padding: "20px", height: "340px", overflowY: "auto", marginBottom: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "inset 0 2px 10px rgba(0,0,0,0.02)" }}>
-                      <div style={{ alignSelf: "flex-end", background: "#1a2744", color: "white", borderRadius: "18px 18px 4px 18px", padding: "12px 16px", maxWidth: "75%", boxShadow: "0 2px 8px rgba(26,39,68,0.15)" }}>
-                        <p style={{ fontSize: "0.7rem", color: "#9ca3af", fontWeight: 600, margin: "0 0 4px", letterSpacing: "0.5px" }}>You (Initial Request)</p>
-                        <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{activeCons.message}</p>
+                    <button className="lc-chat-close" onClick={() => setSelectedConsId(null)}>✕ Close</button>
+                  </div>
+                  <div className="lc-chat-body">
+                    <div className="lc-messages">
+                      {/* Initial request bubble */}
+                      <div className="lc-bubble lc-bubble-me">
+                        <p className="lc-bubble-sender">You (Initial Request)</p>
+                        <p className="lc-bubble-text">{activeCons.message}</p>
                       </div>
 
+                      {/* Legacy reply fallback */}
                       {!activeCons.messages && activeCons.replyMessage && (
-                        <div style={{ alignSelf: "flex-start", background: "#f1f5f9", color: "#1e293b", borderRadius: "18px 18px 18px 4px", padding: "12px 16px", maxWidth: "75%", border: "1px solid #e2e8f0" }}>
-                          <p style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 600, margin: "0 0 4px", letterSpacing: "0.5px" }}>{activeCons.lawyerName}</p>
-                          <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{activeCons.replyMessage}</p>
+                        <div className="lc-bubble lc-bubble-lawyer">
+                          <p className="lc-bubble-sender">{activeCons.lawyerName}</p>
+                          <p className="lc-bubble-text">{activeCons.replyMessage}</p>
                         </div>
                       )}
 
+                      {/* Real-time messages */}
                       {activeCons.messages?.map((msg, idx) => {
                         const isMe = msg.sender === "litigant";
                         return (
-                          <div key={idx} style={{
-                            alignSelf: isMe ? "flex-end" : "flex-start",
-                            background: isMe ? "#1a2744" : "#f1f5f9",
-                            color: isMe ? "white" : "#1e293b",
-                            border: isMe ? "none" : "1px solid #e2e8f0",
-                            borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                            padding: "12px 16px", maxWidth: "75%",
-                            boxShadow: isMe ? "0 2px 8px rgba(26,39,68,0.15)" : "none"
-                          }}>
-                            <p style={{ fontSize: "0.7rem", color: isMe ? "#9ca3af" : "#64748b", fontWeight: 600, margin: "0 0 4px", letterSpacing: "0.5px" }}>{isMe ? "You" : activeCons.lawyerName}</p>
-                            <p style={{ fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>{msg.text}</p>
+                          <div key={idx} className={`lc-bubble ${isMe ? "lc-bubble-me" : "lc-bubble-lawyer"}`}>
+                            <p className="lc-bubble-sender">{isMe ? "You" : activeCons.lawyerName}</p>
+                            <p className="lc-bubble-text">{msg.text}</p>
                           </div>
-                        )
+                        );
                       })}
                     </div>
 
-                    <div style={{ display: "flex", gap: 10 }}>
+                    <div className="lc-input-row">
                       <input
+                        className="lc-input"
                         type="text"
                         value={replyText}
                         onChange={e => setReplyText(e.target.value)}
                         placeholder="Type a message to your lawyer..."
                         onKeyDown={e => e.key === "Enter" && sendLitigantReply()}
-                        style={{ flexGrow: 1, border: "1.5px solid #e5e7eb", borderRadius: 50, padding: "10px 18px", fontSize: "0.85rem", outline: "none" }}
                       />
-                      <button onClick={sendLitigantReply} disabled={sending || !replyText.trim()} style={{ background: "#1a2744", color: "white", border: "none", borderRadius: 50, padding: "10px 24px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
-                        {sending ? "..." : "Send"}
+                      <button className="lc-send-btn" onClick={sendLitigantReply} disabled={sending || !replyText.trim()}>
+                        {sending ? "..." : "📨 Send"}
                       </button>
                     </div>
                   </div>
-                ) : (
-                  consultations.map(c => (
-                    <div key={c.id} style={{ padding: "18px 20px", borderRadius: 14, border: "1px solid rgba(26,39,68,0.06)", background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", cursor: "pointer", transition: "all 0.2s" }} onClick={() => setSelectedConsId(c.id)} onMouseOver={e => e.currentTarget.style.borderColor = "#c9a84c"} onMouseOut={e => e.currentTarget.style.borderColor = "rgba(26,39,68,0.06)"}>
+                </div>
+              ) : (
+                /* ─ Consultation cards grid ─ */
+                <div className="lc-grid">
+                  {consultations.map(c => (
+                    <div key={c.id} className="lc-card" onClick={() => setSelectedConsId(c.id)}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                         <div>
-                          <p style={{ margin: "0 0 2px", fontWeight: 700, color: "#1a2744", fontSize: "0.95rem" }}>{c.lawyerName}</p>
-                          <p style={{ margin: 0, fontSize: "0.75rem", color: "#6b7280" }}>{c.caseType || "Legal Consultation"}</p>
+                          <p style={{ margin: "0 0 2px", fontWeight: 700, color: "#1a2744", fontSize: ".92rem" }}>{c.lawyerName}</p>
+                          <p style={{ margin: 0, fontSize: ".75rem", color: "#6b7280" }}>{c.caseType || "Legal Consultation"}</p>
                         </div>
                         <span style={{
                           background: c.status === "accepted" ? "#dcfce7" : c.status === "declined" ? "#fee2e2" : "#fef3c7",
-                          color: c.status === "accepted" ? "#16a34a" : c.status === "declined" ? "#dc2626" : "#d97706",
-                          padding: "4px 12px", borderRadius: 50, fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase"
+                          color: c.status === "accepted" ? "#16a34a" : c.status === "declined" ? "#dc2626" : "#92400e",
+                          padding: "3px 10px", borderRadius: 50, fontSize: ".68rem", fontWeight: 700,
                         }}>
-                          {c.status}
+                          {c.status === "accepted" ? "✅ Accepted" : c.status === "declined" ? "❌ Declined" : "⏳ Pending"}
                         </span>
                       </div>
-                      <div style={{ background: "#f9fafb", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
-                        <p style={{ margin: "0 0 4px", fontSize: "0.8rem", color: "#374151" }}>📅 <strong>{c.preferredDate}</strong> at <strong>{c.preferredTime}</strong></p>
-                        <p style={{ margin: 0, fontSize: "0.75rem", color: "#4338ca", fontWeight: 600 }}>💬 Click to open chat thread</p>
+                      <div style={{ background: "#f8faff", borderRadius: 10, padding: "10px 14px", borderLeft: "3px solid #c9a84c" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: ".8rem", color: "#374151", fontWeight: 600 }}>📅 {c.preferredDate} {c.preferredTime && `at ${c.preferredTime}`}</p>
+                        <p style={{ margin: 0, fontSize: ".74rem", color: "#4338ca", fontWeight: 600 }}>💬 Click to open chat thread</p>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
